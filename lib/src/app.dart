@@ -19,8 +19,24 @@ class BingoPlayerApp extends StatelessWidget {
         title: const Text("Flutter Vikings 2022"),
         backgroundColor: palette.backgroundSecondary,
       ),
-      body: Center(
-        child: BingoPageViewWrapper(),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: BingoPageViewWrapper(),
+            ),
+          ),
+          TextButton(
+              onPressed: () {
+                // TODO: disable button unless the user "has bingo"
+                // importantly, they will be able to tap _any_ square they want,
+                // so as soon as they tap 5 in a row, they will be able to submit,
+                // but it won't be checked against the server until they press submit
+                // we'll use that to publically shame liars :)
+                print('bingo!');
+              },
+              child: Text('Bingo!'))
+        ],
       ),
     ));
   }
