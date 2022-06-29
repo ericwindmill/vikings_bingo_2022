@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:vikings_bingo/src/widgets/bingo_board_table.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:vikings_bingo/src/widgets/setup/setup_page.dart';
 
-import 'model/bingo_board.dart';
-import 'style/palette.dart';
-import 'style/spacing.dart';
-
-final palette = Palette();
+import 'widgets/game/game_page.dart';
+import 'widgets/start/start_page.dart';
 
 class BingoPlayerApp extends StatelessWidget {
   const BingoPlayerApp({Key? key}) : super(key: key);
@@ -13,55 +11,27 @@ class BingoPlayerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-      backgroundColor: palette.backgroundMain,
-      appBar: AppBar(
-        title: const Text("Flutter Vikings 2022"),
-        backgroundColor: palette.backgroundSecondary,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: BingoPageViewWrapper(),
-            ),
+      routes: {
+        '/': (context) => const StartPage(),
+        '/setup': (context) => const SetupPage(),
+        '/play': (context) => const GamePage(),
+      },
+      initialRoute: '/',
+      theme: ThemeData(
+        textTheme: GoogleFonts.pressStart2pTextTheme(
+          const TextTheme(
+            displayLarge: TextStyle(fontSize: 24.0),
+            displayMedium: TextStyle(fontSize: 20.0),
+            displaySmall: TextStyle(fontSize: 18.0),
+            bodySmall: TextStyle(fontSize: 12.0),
+            bodyMedium: TextStyle(fontSize: 14.0),
+            bodyLarge: TextStyle(fontSize: 16.0),
+            labelLarge: TextStyle(fontSize: 11.0),
+            labelMedium: TextStyle(fontSize: 9.0),
+            labelSmall: TextStyle(fontSize: 9.0),
           ),
-          TextButton(
-              onPressed: () {
-                // TODO: disable button unless the user "has bingo"
-                // importantly, they will be able to tap _any_ square they want,
-                // so as soon as they tap 5 in a row, they will be able to submit,
-                // but it won't be checked against the server until they press submit
-                // we'll use that to publically shame liars :)
-                print('bingo!');
-              },
-              child: Text('Bingo!'))
-        ],
+        ),
       ),
-    ));
-  }
-}
-
-class BingoPageViewWrapper extends StatelessWidget {
-  BingoPageViewWrapper({Key? key}) : super(key: key);
-  final controller = PageController();
-
-  final board = BingoBoard();
-
-  @override
-  Widget build(BuildContext context) {
-    return PageView(
-      controller: controller,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(spacingUnit * 3),
-          child: BingoBoardTable(board: board),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(spacingUnit * 4),
-          child: BingoBoardTable(board: board),
-        ),
-      ],
     );
   }
 }

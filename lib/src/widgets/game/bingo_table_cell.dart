@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
 
-import '../style/palette.dart';
+import '../../game/cell.dart';
+import '../../style/palette.dart';
 
-typedef BingoCellCallback<String> = Function(String value);
+typedef SelectBingoCellCallback = Function(Cell value);
 
-class BingoCell extends StatefulWidget {
-  const BingoCell({
+class BingoTableCell extends StatefulWidget {
+  const BingoTableCell({
     super.key,
-    required this.bingoValue,
+    required this.bingoCell,
     this.onTapCell,
     this.highlightedColor,
     this.height,
     this.isPlayableCell = true,
   });
 
-  final String bingoValue;
+  final Cell bingoCell;
 
-  final BingoCellCallback? onTapCell;
+  final SelectBingoCellCallback? onTapCell;
 
   final Color? highlightedColor;
 
@@ -26,35 +27,27 @@ class BingoCell extends StatefulWidget {
   final bool isPlayableCell;
 
   @override
-  State<BingoCell> createState() => _BingoCellState();
+  State<BingoTableCell> createState() => _BingoTableCellState();
 }
 
-class _BingoCellState extends State<BingoCell> {
-  bool _isSelected = false;
-
-  _toggleIsSelected() {
-    // playable cells do not have toggle-able backgrounds
-    if (!widget.isPlayableCell) return;
-
+class _BingoTableCellState extends State<BingoTableCell> {
+  onTapCell() {
     setState(() {
-      _isSelected = !_isSelected;
+      if (widget.onTapCell != null) widget.onTapCell!(widget.bingoCell);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final height = widget.height ?? MediaQuery.of(context).size.height / 8;
-    final highlighterSize = height - spacingUnit;
-    final isHighlighted = (!widget.isPlayableCell || _isSelected);
+    final h = widget.height ?? MediaQuery.of(context).size.height / 9;
+    final highlighterSize = h - spacingUnit;
+    final isHighlighted = (!widget.isPlayableCell || widget.bingoCell.selected);
     final palette = Palette();
 
     return GestureDetector(
-      onTap: () {
-        _toggleIsSelected();
-        if (widget.onTapCell != null) widget.onTapCell!(widget.bingoValue);
-      },
+      onTap: onTapCell,
       child: SizedBox(
-        height: height, // 6 row + padding
+        height: h, // 6 row + padding
         child: Stack(
           children: [
             Center(
@@ -71,10 +64,10 @@ class _BingoCellState extends State<BingoCell> {
             ),
             Center(
               child: Text(
-                widget.bingoValue,
+                widget.bingoCell.value,
                 style: TextStyle(
                     color: isHighlighted ? palette.lightInk : palette.mainInk,
-                    fontSize: 20.0),
+                    fontSize: widget.bingoCell.value == 'Free' ? 12.0 : 16.0),
               ),
             ),
           ],

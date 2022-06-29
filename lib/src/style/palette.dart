@@ -21,12 +21,21 @@ class Palette {
   Color get _africanViolet => const Color(0xFFB78FCC);
   Color get _purpleMountainMajesty => const Color(0xFFA373BF);
 
+  // Colors by theme piece
+  Color get primary => _englishPurple;
+  Color get primaryLight => _languidLavender;
+  Color get secondary => _greenSheen;
+  Color get tertiary => _flame;
+
   // Colors by use-case
   // Background by page
   Color get backgroundMain => _languidLavender;
   Color get backgroundSecondary => _englishPurple;
   Color get white => _trueWhite;
   Color get black => _black;
+
+  Color get buttonBackground => _englishPurple;
+  Color get buttonText => lightInk;
 
   // inks
   Color get mainInk => _ink;
@@ -50,6 +59,12 @@ class Palette {
         _trueWhite,
       ];
 
+  List<Color> get cascadeBrandSwatch => [
+        _greenSheen,
+        _flame,
+        _englishPurple,
+      ];
+
   // Repeats of colors to control how often a color is selected
   // purely for aesthetics
   Color get randomColor {
@@ -57,9 +72,11 @@ class Palette {
       _flame,
       _flame,
       _englishPurple,
+      _englishPurple,
+      _wisteria,
       _greenSheen,
       _greenSheen,
-      _greenSheen
+      _greenSheen,
     ];
     return options[_random.nextInt(options.length)];
   }

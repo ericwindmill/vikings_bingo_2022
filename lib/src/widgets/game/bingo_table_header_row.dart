@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../style/palette.dart';
-import '../style/spacing.dart';
-import '../util/bingo_util.dart';
+import '../../style/palette.dart';
+import '../../style/spacing.dart';
+import '../../util/bingo_util.dart';
 
 final palette = Palette();
 

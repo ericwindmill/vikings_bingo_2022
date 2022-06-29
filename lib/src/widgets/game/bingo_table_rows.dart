@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'bingo_cell.dart';
+import '../../game/cell.dart';
+import 'bingo_table_cell.dart';
 
 class BingoTableRow extends TableRow {
   const BingoTableRow({
@@ -8,19 +9,22 @@ class BingoTableRow extends TableRow {
     super.decoration,
     required this.values,
     this.height,
+    this.onTapCell,
   });
 
-  final List<String> values;
+  final List<Cell> values;
 
   final double? height;
+
+  final SelectBingoCellCallback? onTapCell;
 
   @override
   List<Widget>? get children => [
         for (var el in values)
-          BingoCell(
-            bingoValue: el,
+          BingoTableCell(
+            bingoCell: el,
             height: height,
-            onTapCell: (bingoValue) {},
+            onTapCell: onTapCell,
           ),
       ];
 }
