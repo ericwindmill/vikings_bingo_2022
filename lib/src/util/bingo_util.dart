@@ -18,6 +18,21 @@ Set<int> generateSingleBingoBoardNumbers() {
   return currentSet;
 }
 
+// used for local development. These bingo cards will come from the host app later
+List<List<Cell>> generateBingoCard() {
+  final List<int> nums = generateSingleBingoBoardNumbers().toList();
+  return List.generate(5, (int row) {
+    return List.generate(5, (int col) {
+      // Free Cell
+      if (row == 2 && col == 2) {
+        return Cell(row, col, value: 'Free');
+      }
+
+      return Cell(row, col, value: nums.removeLast().toString());
+    }, growable: false);
+  }, growable: false);
+}
+
 printListOfCells(List<Cell> l, {String? label}) {
   var values = l.map((cell) => '${cell.letter}${cell.value}');
   print('${label ?? ""} ${values.join(' - ')}');

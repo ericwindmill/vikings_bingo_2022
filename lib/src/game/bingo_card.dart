@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../util/bingo_util.dart';
 import 'cell.dart';
 
 /// BingoCard represents the card that players can interact with.
@@ -15,32 +14,20 @@ import 'cell.dart';
 /// or a cheat :)
 ///
 class BingoCard {
-  BingoCard() {
-    final List<int> nums = generateSingleBingoBoardNumbers().toList();
-    _board = List.generate(5, (int row) {
-      return List.generate(5, (int col) {
-        // Free Cell
-        if (row == 2 && col == 2) {
-          return Cell(row, col, value: 'Free');
-        }
-
-        return Cell(row, col, value: nums.removeLast().toString());
-      }, growable: false);
-    }, growable: false);
-  }
+  BingoCard(this.board);
 
   // These nested lists represent a 5x5 grid
-  late final List<List<Cell>> _board;
+  final List<List<Cell>> board;
 
   ValueNotifier<bool> hasBingo = ValueNotifier(false);
 
   Cell getCell(int row, int col) {
-    return _board[row][col];
+    return board[row][col];
   }
 
   List<Cell> getCol(int col) {
     final newCol = <Cell>[];
-    for (var row in _board) {
+    for (var row in board) {
       newCol.add(row[col]);
     }
     return newCol;
@@ -54,7 +41,7 @@ class BingoCard {
 
   // Checks against the cell that was just selected
   _checkForBingo(Cell cell) {
-    final row = _board[cell.row];
+    final row = board[cell.row];
     final col = getCol(cell.col);
     final rowWin = row.every((element) => element.selected);
     final colWin = col.every((element) => element.selected);
@@ -67,11 +54,11 @@ class BingoCard {
   }
 
   // convenience methods for win conditions
-  List<Cell> get firstRow => _board[0];
-  List<Cell> get secondRow => _board[1];
-  List<Cell> get thirdRow => _board[2];
-  List<Cell> get fourthRow => _board[3];
-  List<Cell> get fifthRow => _board[4];
+  List<Cell> get firstRow => board[0];
+  List<Cell> get secondRow => board[1];
+  List<Cell> get thirdRow => board[2];
+  List<Cell> get fourthRow => board[3];
+  List<Cell> get fifthRow => board[4];
 
   List<Cell> get firstCol => getCol(0);
   List<Cell> get secondCol => getCol(1);
@@ -104,8 +91,8 @@ class BingoCard {
       identical(this, other) ||
       other is BingoCard &&
           runtimeType == other.runtimeType &&
-          _board == other._board;
+          board == other.board;
 
   @override
-  int get hashCode => _board.hashCode;
+  int get hashCode => board.hashCode;
 }
