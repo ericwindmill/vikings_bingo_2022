@@ -8,20 +8,14 @@ import 'bingo_card.dart';
 class GameState extends ChangeNotifier {
   final String gameId;
   final Player player;
-  bool loading = false;
 
   // these nums come from the host app. for now in development, I'm generating the numbers locally
-  final List<BingoCard> cards = [
+  List<BingoCard> cards = [
     BingoCard(generateBingoCard()),
     BingoCard(generateBingoCard()),
   ];
 
   GameState({required this.gameId, required this.player});
-
-  void toggleLoading() {
-    loading = !loading;
-    notifyListeners();
-  }
 
   void joinGame() async {
     // Tell host that a player has joined.
@@ -33,28 +27,28 @@ class GameState extends ChangeNotifier {
       'name': player.name,
     });
 
-    toggleLoading();
+    _listenForUpdatesToPlayer();
   }
 
-  void listenForCardsFromHost() {
+  void _listenForUpdatesToPlayer() {
     // Next, listen to Games/gameId/Players/playerName (same as above)
     // When the Cards are written, populate the bingo board
     FirebaseFirestore.instance
         .collection('Games')
         .doc(gameId)
         .collection('Players')
-        .doc(player!.name)
+        .doc(player.uid)
         .snapshots()
         .listen((docSnapshot) {
       final data = docSnapshot.data()!;
-      player!.addCards(data['cardIds']);
+      player.addCards(data['cardIds']);
+      player.updateStatus(PlayerStatus.playing);
     });
   }
 
   bool submitBingo(BingoCard card) {
-    // Submit values to firebase
-    // get response on win or not
-    // toggle has won to update UI
+    // submit numbers to Firebase
+    // upateUser
     return false;
   }
 }

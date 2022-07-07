@@ -22,10 +22,15 @@ class _GamePageState extends State<GamePage> {
     final gameState = context.watch<GameState>();
 
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      body: Stack(
         children: [
-          // Text(gameState.player!.name),
+          Align(
+            alignment: AlignmentDirectional.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+              child: Text('Player: ${gameState.player.name}'),
+            ),
+          ),
           Expanded(
             child: PageView(
               controller: controller,
@@ -48,7 +53,8 @@ class _GamePageState extends State<GamePage> {
                       Align(
                         alignment: AlignmentDirectional.bottomCenter,
                         child: Padding(
-                          padding: const EdgeInsets.all(spacingUnit * 2),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: spacingUnit * 10),
                           child: ValueListenableBuilder<bool>(
                               valueListenable: card.hasBingo,
                               builder: (context, bool value, child) {

@@ -28,5 +28,7 @@ class Player {
 
   void updateStatus(PlayerStatus newStatus) {
     status = newStatus;
+
+    // update Firebase
   }
 }

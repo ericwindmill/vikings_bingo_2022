@@ -47,21 +47,18 @@ class SetupPage extends StatelessWidget {
               width: 20,
               height: 20,
             ),
-            gameState.loading
-                ? CircularProgressIndicator()
-                : Center(
-                    child: OutlinedButton(
-                      style: outlineButtonStyle,
-                      onPressed: () {
-                        gameState.toggleLoading();
-                        gameState.joinGame();
-                        Navigator.pushReplacementNamed(context, '/play');
-                      },
-                      child: const Text(
-                        'Join Game',
-                      ),
-                    ),
-                  )
+            Center(
+              child: OutlinedButton(
+                style: outlineButtonStyle,
+                onPressed: () {
+                  gameState.joinGame();
+                  Navigator.pushReplacementNamed(context, '/play');
+                },
+                child: const Text(
+                  'Join Game',
+                ),
+              ),
+            )
           ],
         ),
       ),
