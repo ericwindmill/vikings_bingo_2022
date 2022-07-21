@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared/util/bingo_util.dart';
 
-import '../../game/bingo_util.dart';
 import '../../style/palette.dart';
 import '../../style/spacing.dart';
 

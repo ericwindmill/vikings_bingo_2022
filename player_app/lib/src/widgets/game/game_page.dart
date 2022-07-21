@@ -31,31 +31,36 @@ class _GamePageState extends State<GamePage> {
               child: Text('Player: ${gameState.player.name}'),
             ),
           ),
-          Expanded(
-            child: PageView(
-              controller: controller,
-              children: [
-                for (var card in gameState.cards)
-                  Stack(
-                    children: [
-                      Align(
-                        alignment: AlignmentDirectional.center,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: spacingUnit * 3),
-                          child: KeepAlivePage(
-                            child: BingoCardTable(
-                              card: card,
+          if (gameState.cards.isEmpty)
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+          if (gameState.cards.isNotEmpty)
+            Expanded(
+              child: PageView(
+                controller: controller,
+                children: [
+                  for (var card in gameState.cards)
+                    Stack(
+                      children: [
+                        Align(
+                          alignment: AlignmentDirectional.center,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: spacingUnit * 3),
+                            child: KeepAlivePage(
+                              child: BingoCardTable(
+                                card: card,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: spacingUnit * 10),
-                          child: ValueListenableBuilder<bool>(
+                        Align(
+                          alignment: AlignmentDirectional.bottomCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: spacingUnit * 10),
+                            child: ValueListenableBuilder<bool>(
                               valueListenable: card.hasBingo,
                               builder: (context, bool value, child) {
                                 return ElevatedButton(
@@ -67,13 +72,14 @@ class _GamePageState extends State<GamePage> {
                                   style: ButtonStyle(
                                     backgroundColor:
                                         MaterialStateProperty.resolveWith(
-                                            (state) {
-                                      if (state
-                                          .contains(MaterialState.disabled)) {
-                                        return palette.primaryLight;
-                                      }
-                                      return palette.buttonBackground;
-                                    }),
+                                      (state) {
+                                        if (state
+                                            .contains(MaterialState.disabled)) {
+                                          return palette.primaryLight;
+                                        }
+                                        return palette.buttonBackground;
+                                      },
+                                    ),
                                     foregroundColor: MaterialStateProperty.all(
                                         palette.buttonText),
                                     textStyle: MaterialStateProperty.all(
@@ -89,14 +95,15 @@ class _GamePageState extends State<GamePage> {
                                   ),
                                   child: const Text('BINGO!'),
                                 );
-                              }),
-                        ),
-                      )
-                    ],
-                  ),
-              ],
+                              },
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

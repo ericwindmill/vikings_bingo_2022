@@ -1,16 +1,18 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/player.dart';
 import 'package:vikings_bingo/src/app.dart';
 import 'package:vikings_bingo/src/style/palette.dart';
 import 'package:vikings_bingo/src/util/game_util.dart';
 
 import 'firebase_options.dart';
 import 'src/game/game_state.dart';
-import 'src/model/player.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,6 @@ void main() async {
   }
 
   Player player = await _bootstrapPlayer();
-  String currentGameId = await _getCurrentGame();
 
   runApp(
     MultiProvider(
@@ -36,7 +37,7 @@ void main() async {
         Provider(create: (context) => Palette()),
         ChangeNotifierProvider(
           create: (context) {
-            return GameState(player: player, gameId: currentGameId);
+            return GameState(player: player);
           },
           lazy: false,
         ),
@@ -69,15 +70,4 @@ Future<Player> _bootstrapPlayer() async {
   }
 
   return player;
-}
-
-Future<String> _getCurrentGame() async {
-  return FirebaseFirestore.instance
-      .collection('Globals')
-      .doc('Bootstrap')
-      .get()
-      .then((docSnapshot) {
-    final data = docSnapshot.data() as Map<String, dynamic>;
-    return data['currentGame'];
-  });
 }

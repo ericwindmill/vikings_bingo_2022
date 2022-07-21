@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/bingo_card.dart';
+import 'package:shared/cell.dart';
 import 'package:vikings_bingo/src/widgets/shared/shadow.dart';
 
-import '../../game/bingo_card.dart';
-import '../../game/cell.dart';
 import '../../style/palette.dart';
 import 'bingo_table_header_row.dart';
 import 'bingo_table_rows.dart';
