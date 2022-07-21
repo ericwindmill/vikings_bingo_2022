@@ -37,7 +37,7 @@ class StartPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/setup');
                   },
-                  child: const Text('Join Game'),
+                  child: const Text('Start'),
                 ),
               ],
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared/cell.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
 
-import '../../game/cell.dart';
 import '../../style/palette.dart';
 
 typedef SelectBingoCellCallback = Function(Cell value);
