@@ -62,13 +62,13 @@ class _MyHomePageState extends State<MyHomePage> {
     _getCurrentGameStream().listen((gameId) {
       _getGamePlayersStream(gameId).listen((snapshot) {
         if (kDebugMode) print('Got ${snapshot.docs.length} player docs');
-        snapshot.docs.forEach((doc) {
+        for (var doc in snapshot.docs) {
           var playerId = doc.id;
           var data = doc.data()! as Map;
           if (data['state'] == 'Waiting for cards') {
             _generateCardsForPlayer(gameId, playerId);
           }
-        });
+        };
       });
     });
   }
@@ -122,7 +122,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 return const CircularProgressIndicator();
               }
             ),
-
             ElevatedButton(
               child: const Text('Start new game'),
               onPressed: () {
@@ -182,7 +181,7 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
     'createdAt': Timestamp.now(),
     'numbers': card,
   });
-  batch.set(db.doc('Games/$gameId/Players/$playerId'), { 'state': 'Cards dealt' });
+  batch.set(db.doc('Games/$gameId/Players/$playerId'), { 'state': 'Cards dealt: [$cardId]' });
 
   return batch.commit();
 }
