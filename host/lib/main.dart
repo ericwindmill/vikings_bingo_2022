@@ -93,14 +93,15 @@ class _MyHomePageState extends State<MyHomePage> {
               stream: currentGameId,
               builder: (buildContext, AsyncSnapshot<String> asyncSnapshot) {
                 if (asyncSnapshot.hasData) {
+                  var gameId = asyncSnapshot.data!;
                   return Column(children: [ 
                     Text(
-                      asyncSnapshot.data!,
+                      gameId,
                       style: Theme.of(context).textTheme.headline4,
                     ),
                     const Text("Player count: "),
                     StreamBuilder(
-                      stream: _getGamePlayersStream(asyncSnapshot.data!),
+                      stream: _getGamePlayersStream(gameId),
                       builder: (buildCcontext, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
                         if (asyncSnapshot.hasData) {
                           return Text(
@@ -114,6 +115,30 @@ class _MyHomePageState extends State<MyHomePage> {
                         return const CircularProgressIndicator();
                       }
                     ),
+                    const Text("Last numbers:"),
+                    StreamBuilder(
+                      stream: _getNumbers(gameId),
+                      builder: (buildCcontext, AsyncSnapshot<List<String>> asyncSnapshot) {
+                        if (asyncSnapshot.hasData) {
+                          var numbers = asyncSnapshot.data!;
+                          return Text(
+                            numbers.last,
+                            style: Theme.of(context).textTheme.headline4,
+                          );
+                        }
+
+                        if (asyncSnapshot.hasError) {
+                          return Text('${asyncSnapshot.error}');
+                        }
+                        return const CircularProgressIndicator();
+                      },
+                    ),
+                    ElevatedButton(
+                      child: const Text("Draw"),
+                      onPressed: () {
+                        _generateNextNumber(gameId);
+                      }, 
+                    )
                   ]);
                 }
                 if (asyncSnapshot.hasError) {
@@ -167,6 +192,22 @@ Stream<QuerySnapshot> _getGamePlayersStream(String gameId) {
       .doc(gameId)
       .collection('Players')
       .snapshots();
+}
+Stream<List<String>> _getNumbers(String gameId) {
+  return FirebaseFirestore.instance
+      .collection('Games')
+      .doc(gameId)
+      .snapshots().map((docSnapshot) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      return List<String>.from(data.containsKey('numbers') ? data['numbers'] : ['-none-']);
+  });
+}
+Future<void> _generateNextNumber(String gameId) {
+  var number = random.nextInt(75).toString();
+  return FirebaseFirestore.instance
+      .collection('Games')
+      .doc(gameId)
+      .update({ 'numbers': FieldValue.arrayUnion([number]) });
 }
 
 Random random = Random(); // main randomizer
