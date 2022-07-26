@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vikings_bingo/src/widgets/setup/setup_page.dart';
@@ -11,6 +12,7 @@ class BingoPlayerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scrollBehavior: AppScrollBehavior(),
       routes: {
         '/': (context) => const StartPage(),
         '/setup': (context) => const SetupPage(),
@@ -34,4 +36,15 @@ class BingoPlayerApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// This class overrides gesture behavior, and allows us to use the mouse to trigger
+/// drag gestures. In this case, it allows us to swipe on the "PageView" widget
+/// while running the app on the Web.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
 }

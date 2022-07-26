@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared/cell.dart';
 
-import '../../game/cell.dart';
 import 'bingo_table_cell.dart';
 
 class BingoTableRow extends TableRow {

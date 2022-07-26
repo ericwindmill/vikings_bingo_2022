@@ -11,6 +11,7 @@ class SetupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
+    final gameId = context.select((GameState s) => s.gameId);
 
     return Scaffold(
       body: Padding(
@@ -27,7 +28,7 @@ class SetupPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: spacingUnit * 4),
               child: Text(
-                context.select((GameState s) => s.gameId),
+                gameId ?? 'Waiting for game...',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -50,10 +51,12 @@ class SetupPage extends StatelessWidget {
             Center(
               child: OutlinedButton(
                 style: outlineButtonStyle,
-                onPressed: () {
-                  gameState.joinGame();
-                  Navigator.pushReplacementNamed(context, '/play');
-                },
+                onPressed: gameId != null
+                    ? () {
+                        gameState.joinGame();
+                        Navigator.pushReplacementNamed(context, '/play');
+                      }
+                    : null,
                 child: const Text(
                   'Join Game',
                 ),

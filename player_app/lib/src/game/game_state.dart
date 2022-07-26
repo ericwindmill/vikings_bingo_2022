@@ -1,54 +1,107 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:vikings_bingo/src/game/bingo_util.dart';
-
-import '../model/player.dart';
-import 'bingo_card.dart';
+import 'package:shared/bingo_card.dart';
+import 'package:shared/player.dart';
+import 'package:shared/player_status.dart';
 
 class GameState extends ChangeNotifier {
-  final String gameId;
+  String? gameId;
   final Player player;
+  final List<BingoCard> cards = [];
 
-  // these nums come from the host app. for now in development, I'm generating the numbers locally
-  List<BingoCard> cards = [
-    BingoCard(generateBingoCard()),
-    BingoCard(generateBingoCard()),
-  ];
-
-  GameState({required this.gameId, required this.player});
+  GameState({required this.player}) {
+    // Subscribe to Globals/Bootstrap happen
+    FirebaseFirestore.instance
+        .collection('Globals')
+        .doc('Bootstrap')
+        .snapshots()
+        .listen((event) {
+      final game = event.data()!['currentGame'] as String;
+      gameId = game;
+      notifyListeners();
+    });
+  }
 
   void joinGame() async {
     // Tell host that a player has joined.
-    // The host will then create 3 cards and add them to Firestore
+    // The host will then create a few cards and add them to Firestore
     // at location : Games/gameId/Players/playerName/Cards
-    await FirebaseFirestore.instance.collection('Users').doc(player.uid).set({
-      'game': gameId,
-      'uid': player.uid,
+    await FirebaseFirestore.instance
+        .collection('Games/$gameId/Players')
+        .doc(player.uid)
+        .set({
+      'status': player.status.value,
       'name': player.name,
     });
+
+    // Attempt to get cards, if any exist.
+    // This is helpful for Web, where people can
+    // refresh their browser and it wipes all state
+    _getCardsForPlayer();
 
     _listenForUpdatesToPlayer();
   }
 
+  void submitBingo(BingoCard card) {
+    _updatePlayerStatus(PlayerStatus.claimingBingo);
+  }
+
   void _listenForUpdatesToPlayer() {
-    // Next, listen to Games/gameId/Players/playerName (same as above)
-    // When the Cards are written, populate the bingo board
     FirebaseFirestore.instance
-        .collection('Games')
-        .doc(gameId)
-        .collection('Players')
+        .collection('Games/$gameId/Players')
         .doc(player.uid)
         .snapshots()
         .listen((docSnapshot) {
-      final data = docSnapshot.data()!;
-      player.addCards(data['cardIds']);
-      player.updateStatus(PlayerStatus.playing);
+      final data = (docSnapshot.data() as Map);
+      final status = data['status'];
+      var playerStatus = statusFromString[status];
+      switch (playerStatus) {
+        case PlayerStatus.waitingForCards:
+          break;
+        case PlayerStatus.cardsDealt:
+          _getCardsForPlayer();
+          break;
+        case PlayerStatus.playing:
+          // TODO: Handle this case.
+          break;
+        case PlayerStatus.claimingBingo:
+          // TODO: Handle this case.
+          break;
+        case PlayerStatus.wonBingo:
+          // TODO: Handle this case.
+          break;
+        case null:
+          print("oopsies, that ain't a status");
+      }
     });
   }
 
-  bool submitBingo(BingoCard card) {
-    // submit numbers to Firebase
-    // upateUser
-    return false;
+  void _getCardsForPlayer() {
+    FirebaseFirestore.instance
+        .collection('Games/$gameId/Players/${player.uid}/Cards')
+        .get()
+        .then((QuerySnapshot snapshot) {
+      if (snapshot.docs.isEmpty) return;
+      final bingoCards = snapshot.docs.map((DocumentSnapshot doc) {
+        final data = doc.data();
+        final bingoValues = (data as Map<String, List<String>>)['cards'];
+        return BingoCard.fromListOfValues(bingoValues as List<String>);
+      }).toList();
+
+      cards.addAll(bingoCards);
+      notifyListeners();
+    });
+  }
+
+  void _updatePlayerStatus(PlayerStatus newStatus) {
+    if (newStatus != player.status) {
+      player.status = newStatus;
+      FirebaseFirestore.instance
+          .collection('Games/$gameId/Players')
+          .doc(player.uid)
+          .update({
+        'status': player.status.value,
+      });
+    }
   }
 }
