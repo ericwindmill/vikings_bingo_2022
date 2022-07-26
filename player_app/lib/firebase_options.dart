@@ -26,7 +26,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
     }
 
     throw UnsupportedError(
@@ -35,40 +38,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCLuP5dLYRwpu0AtcQldkCxxO94laW1Hqo',
-    appId: '1:845831780402:web:ab249e609a6b2684d7642b',
-    messagingSenderId: '845831780402',
-    projectId: 'flutter-vikings-bingo',
-    authDomain: 'flutter-vikings-bingo.firebaseapp.com',
-    storageBucket: 'flutter-vikings-bingo.appspot.com',
-    measurementId: 'G-7TKSC49TTX',
+    apiKey: 'AIzaSyBgB5TsTs1_GIo2f-TcZyjTgVDNZfuXN5I',
+    appId: '1:1063094620957:web:100eafe3739c2fbe36c7f4',
+    messagingSenderId: '1063094620957',
+    projectId: 'bingo3000',
+    authDomain: 'bingo3000.firebaseapp.com',
+    storageBucket: 'bingo3000.appspot.com',
+    measurementId: 'G-0CJ7ZM14X6',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDNiDIpPmweGMYa8TgXpdvXZtTfdLo2g1g',
-    appId: '1:845831780402:android:4fc171f964736f0ad7642b',
-    messagingSenderId: '845831780402',
-    projectId: 'flutter-vikings-bingo',
-    storageBucket: 'flutter-vikings-bingo.appspot.com',
+    apiKey: 'AIzaSyDgNym34Aw6lSQWhx38KtEVNyEaSRw1cPM',
+    appId: '1:1063094620957:android:d9ef28f5bc049a0136c7f4',
+    messagingSenderId: '1063094620957',
+    projectId: 'bingo3000',
+    storageBucket: 'bingo3000.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBCWD9EZNNk7IwHHr2UzdxbR3t__hp-eMU',
-    appId: '1:845831780402:ios:da71434b2ebf435ed7642b',
-    messagingSenderId: '845831780402',
-    projectId: 'flutter-vikings-bingo',
-    storageBucket: 'flutter-vikings-bingo.appspot.com',
-    iosClientId: '845831780402-for8fg8p40pd4760v355r3nusv6eku7e.apps.googleusercontent.com',
-    iosBundleId: 'com.example.vikingsBingo',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBCWD9EZNNk7IwHHr2UzdxbR3t__hp-eMU',
-    appId: '1:845831780402:ios:da71434b2ebf435ed7642b',
-    messagingSenderId: '845831780402',
-    projectId: 'flutter-vikings-bingo',
-    storageBucket: 'flutter-vikings-bingo.appspot.com',
-    iosClientId: '845831780402-for8fg8p40pd4760v355r3nusv6eku7e.apps.googleusercontent.com',
+    apiKey: 'AIzaSyDauNCgsqogRVV4DXKen1O0noeZ1tAs7yU',
+    appId: '1:1063094620957:ios:1cba02952ee3126f36c7f4',
+    messagingSenderId: '1063094620957',
+    projectId: 'bingo3000',
+    storageBucket: 'bingo3000.appspot.com',
+    iosClientId: '1063094620957-lqu8e04e5dr20f16cn8vk41sla045453.apps.googleusercontent.com',
     iosBundleId: 'com.example.vikingsBingo',
   );
 }
