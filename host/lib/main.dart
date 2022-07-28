@@ -15,7 +15,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  if (!kReleaseMode) {
+  if (false && !kReleaseMode) {
     try {
       FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
       await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
@@ -52,10 +52,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Stream<String> currentGameId = _getCurrentGameStream();
-  Stream<QuerySnapshot> currentPlayers = _getGamePlayersStream("none");
-  Stream<List<String>> currentNumbers = _getNumbers("none");
-  Stream<QuerySnapshot> currentCards = _getCards("none");
+  Stream<String> gameIdStream = _getCurrentGameStream();
+  Stream<QuerySnapshot> playersStream = _getGamePlayersStream("none");
+  QuerySnapshot? currentPlayers;
+  Stream<List<String>> numbersStream = _getNumbersStream("none");
+  Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
 
   Map<int,int> currentScores = {};
 
@@ -63,11 +64,16 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
 
-    _getCurrentGameStream().listen((gameId) {
-      currentPlayers = _getGamePlayersStream(gameId);
-      currentNumbers = _getNumbers(gameId);
-      currentCards = _getCards(gameId);
-      currentPlayers.listen((snapshot) {
+    gameIdStream.listen((gameId) {
+      playersStream = _getGamePlayersStream(gameId);
+      playersStream.listen((snapshot) => {
+        setState(() {
+          currentPlayers = snapshot;
+        })
+      });
+      numbersStream = _getNumbersStream(gameId);
+      cardsStream = _getCardsStream(gameId);
+      playersStream.listen((snapshot) {
         if (kDebugMode) print('Got ${snapshot.docs.length} player docs');
         for (var doc in snapshot.docs) {
           var playerId = doc.id;
@@ -77,8 +83,8 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         };
       });
-      currentCards.listen((cardsSnapshot) {
-        currentNumbers.listen((numbers) {
+      cardsStream.listen((cardsSnapshot) {
+        numbersStream.listen((numbers) {
           Map<int,int> result = {};
           for (var card in cardsSnapshot.docs) {
             var cardId = int.parse(card.id);
@@ -90,29 +96,6 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         });
       });
-    });
-  }
-
-  void _calculateCurrentScores() async {
-    print('In _calculateCurrentScores');
-    var numbers = await currentNumbers.last;
-    var cards = await currentCards.last;
-
-    print('Determining current scores for ${cards.size} cards and ${numbers.length} numbers');
-
-    Map<int,int> result = {};
-    for (var card in cards.docs) {
-      var cardId = int.parse(card.id);
-      result[cardId] = _getScoreForCard(numbers, cardId);
-    };
-    print('Card scores: $result');
-    setState(() {
-      currentScores = result;
-    });
-  }
-
-  void _incrementCounter() {
-    setState(() {
     });
   }
 
@@ -128,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             const Text("Current game: "),
             StreamBuilder(
-              stream: currentGameId,
+              stream: gameIdStream,
               builder: (buildContext, AsyncSnapshot<String> asyncSnapshot) {
                 if (asyncSnapshot.hasData) {
                   var gameId = asyncSnapshot.data!;
@@ -138,24 +121,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: Theme.of(context).textTheme.headline4,
                     ),
                     const Text("Player count: "),
-                    StreamBuilder(
-                      stream: currentPlayers,
-                      builder: (buildContext, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
-                        if (asyncSnapshot.hasData) {
-                          return Text(
-                            '${asyncSnapshot.data!.docs.length}',
-                            style: Theme.of(context).textTheme.headline4,
-                          );
-                        }
-                        if (asyncSnapshot.hasError) {
-                          return Text('${asyncSnapshot.error}');
-                        }
-                        return const CircularProgressIndicator();
-                      }
+                    Text(
+                      currentPlayers?.size.toString() ?? "0",
+                      style: Theme.of(context).textTheme.headline4
                     ),
                     const Text("Last numbers:"),
                     StreamBuilder(
-                      stream: currentNumbers,
+                      stream: numbersStream,
                       builder: (buildContext, AsyncSnapshot<List<String>> asyncSnapshot) {
                         if (asyncSnapshot.hasData) {
                           var numbers = asyncSnapshot.data!;
@@ -173,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const Text("Cards"),
                     StreamBuilder(
-                      stream: currentCards,
+                      stream: cardsStream,
                       builder: (buildContext, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
                         if (asyncSnapshot.hasData) {
                           var cards = asyncSnapshot.data!.docs;
@@ -216,11 +188,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
@@ -239,8 +206,13 @@ Stream<String> _getCurrentGameStream() {
       .collection('Globals')
       .doc('Bootstrap')
       .snapshots().map((docSnapshot) {
-      final data = docSnapshot.data() as Map<String, dynamic>;
-      return data['currentGame'];
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        return data['currentGame'];
+      }
+      else {
+        return '-none-';
+      }
   });
 }
 
@@ -251,16 +223,22 @@ Stream<QuerySnapshot> _getGamePlayersStream(String gameId) {
       .collection('Players')
       .snapshots();
 }
-Stream<List<String>> _getNumbers(String gameId) {
+Stream<List<String>> _getNumbersStream(String gameId) {
   return FirebaseFirestore.instance
       .collection('Games')
       .doc(gameId)
       .snapshots().map((docSnapshot) {
-      final data = docSnapshot.data() as Map<String, dynamic>;
-      return List<String>.from(data.containsKey('numbers') ? data['numbers'] : ['-none-']);
+        // TODO: Unhandled Exception: type 'Null' is not a subtype of type 'Map<String, dynamic>' in type cast
+      if (docSnapshot.exists && docSnapshot.data() != null && docSnapshot.data()!.containsKey('numbers')) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        return List<String>.from(data['numbers']);
+      }
+      else {
+        return  ['-none-'];
+      }
   });
 }
-Stream<QuerySnapshot> _getCards(String gameId) {
+Stream<QuerySnapshot> _getCardsStream(String gameId) {
   var path = '/Games/$gameId';
   return FirebaseFirestore.instance
     .collectionGroup("Cards")
@@ -286,7 +264,7 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   final batch = db.batch();
 
   var cardId = random.nextInt(1<<32);
-  var card = _generateCardFromCardId(cardId);
+  var card = _getNumbersForCardId(cardId);
   batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), { 
     'createdAt': Timestamp.now(),
     'numbers': card,
@@ -296,7 +274,7 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   return batch.commit();
 }
 
-List<String> _generateCardFromCardId(int cardId) {
+List<String> _getNumbersForCardId(int cardId) {
   var cardGenerator = Random(cardId);
   List<String> numbers = [];
   for (var i=0; i< 24; i++) {
@@ -308,7 +286,7 @@ List<String> _generateCardFromCardId(int cardId) {
 
 int _getScoreForCard(List<String> numbers, int cardId) {
   const lines = [[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14],[15,16,17,18,19],[20,21,22,23,24], [1,6,11,15,20],[2,7,12,16,21],[3,8,17,22],[4,9,13,18,23],[5,10,14,19,24], [1,6,18,23], [5,9,16,20]];
-  var card = _generateCardFromCardId(cardId);
+  var card = _getNumbersForCardId(cardId);
 
   var maxLength = 0;
   for (var line in lines) {
