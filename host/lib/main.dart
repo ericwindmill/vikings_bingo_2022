@@ -78,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
         for (var doc in snapshot.docs) {
           var playerId = doc.id;
           var data = doc.data()! as Map;
-          if (data['state'] == 'Waiting for cards') {
+          if (data['status'] == 'waiting for cards') {
             _generateCardsForPlayer(gameId, playerId);
           }
         };
@@ -263,13 +263,13 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
-  var cardId = random.nextInt(1<<32);
+  var cardId = random.nextInt(1<<31);
   var card = _getNumbersForCardId(cardId);
   batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), { 
     'createdAt': Timestamp.now(),
     'numbers': card,
   });
-  batch.set(db.doc('Games/$gameId/Players/$playerId'), { 'state': 'Cards dealt: [$cardId]' });
+  batch.update(db.doc('Games/$gameId/Players/$playerId'), { 'status': 'cards dealt: [$cardId]' });
 
   return batch.commit();
 }
