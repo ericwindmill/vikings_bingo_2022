@@ -269,7 +269,7 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
     'createdAt': Timestamp.now(),
     'numbers': card,
   });
-  batch.update(db.doc('Games/$gameId/Players/$playerId'), { 'status': 'cards dealt: [$cardId]' });
+  batch.update(db.doc('Games/$gameId/Players/$playerId'), { 'status': 'cards dealt' });
 
   return batch.commit();
 }
