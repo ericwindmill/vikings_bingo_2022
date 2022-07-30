@@ -263,7 +263,7 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
-  var cardId = random.nextInt(1<<31);
+  var cardId = random.nextInt(1<<32);
   var card = _getNumbersForCardId(cardId);
   batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), { 
     'createdAt': Timestamp.now(),
