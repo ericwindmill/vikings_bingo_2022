@@ -15,14 +15,14 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  if (false && !kReleaseMode) {
-    try {
-      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
+  // if (!kReleaseMode) {
+  //   try {
+  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  //   } catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
   runApp(const MyApp());
 }
 
@@ -56,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<QuerySnapshot> playersStream = _getGamePlayersStream("none");
   QuerySnapshot? currentPlayers;
   Stream<List<String>> numbersStream = _getNumbersStream("none");
+  List<String> currentNumbers = [];
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
 
   Map<int,int> currentScores = {};
@@ -81,6 +82,9 @@ class _MyHomePageState extends State<MyHomePage> {
           if (data['status'] == 'waiting for cards') {
             _generateCardsForPlayer(gameId, playerId);
           }
+          if (data['status'] == 'claiming bingo') { // TODO: add cardId to the claim
+            _claimBingoForPlayer(gameId, playerId, currentNumbers);
+          }
         };
       });
       cardsStream.listen((cardsSnapshot) {
@@ -92,6 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
           };
           print('Card scores: $result');
           setState(() {
+            currentNumbers = numbers;
             currentScores = result;
           });
         });
@@ -272,6 +277,25 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   batch.update(db.doc('Games/$gameId/Players/$playerId'), { 'status': 'cards dealt' });
 
   return batch.commit();
+}
+
+Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> numbers) async {
+  var hasBingo = false;
+  // get cards for player
+  var snapshot = await FirebaseFirestore.instance.collection('Games/$gameId/Players/$playerId/Cards/').get();
+  var cardIds = snapshot.docs.map((doc) => int.parse(doc.id));
+  for (var cardId in cardIds) {
+    // if this card has a score of 5, the claim is correct
+    if (_getScoreForCard(numbers, cardId) >= 5) {
+      hasBingo = true;
+    }
+  }
+
+  await FirebaseFirestore.instance
+    .doc('Games/$gameId/Players/$playerId')
+    .update({ 'status': 'hasBingo: $hasBingo' });
+
+  return hasBingo;
 }
 
 List<String> _getNumbersForCardId(int cardId) {
