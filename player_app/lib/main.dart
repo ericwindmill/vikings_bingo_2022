@@ -19,15 +19,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // if (!kReleaseMode) {
-  //   try {
-  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  //   } catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
-
   Player player = await _bootstrapPlayer();
 
   runApp(
