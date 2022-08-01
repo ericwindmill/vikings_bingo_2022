@@ -28,7 +28,10 @@ class _GamePageState extends State<GamePage> {
             alignment: AlignmentDirectional.topCenter,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-              child: Text('Player: ${gameState.player.name}'),
+              child: Text(
+                context.select(
+                    (GameState value) => 'Player: ${gameState.player.name}'),
+              ),
             ),
           ),
           if (gameState.cards.isEmpty)
