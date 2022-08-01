@@ -70,6 +70,10 @@ class GameState extends ChangeNotifier {
         case PlayerStatus.wonBingo:
           // TODO: Handle this case.
           break;
+        case PlayerStatus.falseBingo:
+          // TODO: Handle this case.
+          // https://www.google.com/search?q=did+you+really+though+meme
+          break;
         case null:
           print("oopsies, that ain't a status");
       }

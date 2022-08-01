@@ -293,7 +293,7 @@ Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> n
 
   await FirebaseFirestore.instance
     .doc('Games/$gameId/Players/$playerId')
-    .update({ 'status': 'hasBingo: $hasBingo' });
+    .update({ 'status': hasBingo ? 'wonBingo' : 'false bingo' });
 
   return hasBingo;
 }

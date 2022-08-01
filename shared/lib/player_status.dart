@@ -3,7 +3,8 @@ enum PlayerStatus {
   cardsDealt,
   playing,
   claimingBingo,
-  wonBingo
+  wonBingo,
+  falseBingo,
 }
 
 const statusFromString = <String, PlayerStatus>{
@@ -19,6 +20,7 @@ const String waitingForCards = 'waiting for cards';
 const String cardsDealt = 'cards dealt';
 const String claimingBingo = 'claiming bingo';
 const String wonBingo = 'wonBingo';
+const String falseBingo = 'false bingo';
 
 extension ReadableStatus on PlayerStatus {
   String get value {
@@ -33,6 +35,8 @@ extension ReadableStatus on PlayerStatus {
         return cardsDealt;
       case PlayerStatus.wonBingo:
         return wonBingo;
+      case PlayerStatus.falseBingo:
+        return falseBingo;
     }
   }
 }
