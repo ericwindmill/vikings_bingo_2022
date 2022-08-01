@@ -70,6 +70,10 @@ class GameState extends ChangeNotifier {
         case PlayerStatus.wonBingo:
           // TODO: Handle this case.
           break;
+        case PlayerStatus.falseBingo:
+          // TODO: Handle this case.
+          // https://www.google.com/search?q=did+you+really+though+meme
+          break;
         case null:
           print("oopsies, that ain't a status");
       }
@@ -83,9 +87,9 @@ class GameState extends ChangeNotifier {
         .then((QuerySnapshot snapshot) {
       if (snapshot.docs.isEmpty) return;
       final bingoCards = snapshot.docs.map((DocumentSnapshot doc) {
-        final data = doc.data();
-        final bingoValues = (data as Map<String, List<String>>)['cards'];
-        return BingoCard.fromListOfValues(bingoValues as List<String>);
+        final data = doc.data() as Map<String, dynamic>;
+        final bingoValues = List<String>.from(data['numbers'] as List<dynamic>);
+        return BingoCard.fromListOfValues(bingoValues);
       }).toList();
 
       cards.addAll(bingoCards);
