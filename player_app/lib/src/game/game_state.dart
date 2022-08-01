@@ -1,16 +1,57 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/bingo_card.dart';
 import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 
+import '../util/game_util.dart';
+
 class GameState extends ChangeNotifier {
   String? gameId;
-  final Player player;
   final List<BingoCard> cards = [];
 
-  GameState({required this.player}) {
-    // Subscribe to Globals/Bootstrap happen
+  late Player _player;
+  final StreamController<Player> _playerStreamController =
+      StreamController<Player>();
+  Stream<Player> get player => _playerStreamController.stream;
+
+  GameState() {
+    _init();
+  }
+
+  void _init() async {
+    // Get or create a User, which transcends individual games.
+    // Used mainly to maintain state when a user refreshes their browser
+    final firebaseUser = await FirebaseAuth.instance.signInAnonymously();
+    FirebaseFirestore.instance
+        .collection('Users')
+        .doc(firebaseUser.user!.uid)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        // get user from Firestore data
+        final data = snapshot.data() as Map<String, dynamic>;
+        _player = Player(
+          uid: data['uid'],
+          name: data['name'],
+        );
+        _playerStreamController.add(_player);
+      } else {
+        // create new user
+        FirebaseFirestore.instance
+            .collection('Users')
+            .doc(firebaseUser.user!.uid)
+            .set(Player(
+              uid: firebaseUser.user!.uid,
+              name: generateRandomPlayerName(),
+            ).toJson());
+      }
+    });
+
+    // Subscribe to Globals/Bootstrap to determine current game
     FirebaseFirestore.instance
         .collection('Globals')
         .doc('Bootstrap')
@@ -20,7 +61,11 @@ class GameState extends ChangeNotifier {
       gameId = game;
       notifyListeners();
     });
+
+    _checkForExistingGameState();
   }
+
+  void _checkForExistingGameState() {}
 
   void joinGame() async {
     // Tell host that a player has joined.
@@ -28,10 +73,10 @@ class GameState extends ChangeNotifier {
     // at location : Games/gameId/Players/playerName/Cards
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
-        .doc(player.uid)
+        .doc(_player.uid)
         .set({
-      'status': player.status.value,
-      'name': player.name,
+      'status': _player.status.value,
+      'name': _player.name,
     });
 
     // Attempt to get cards, if any exist.
@@ -49,7 +94,7 @@ class GameState extends ChangeNotifier {
   void _listenForUpdatesToPlayer() {
     FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
-        .doc(player.uid)
+        .doc(_player.uid)
         .snapshots()
         .listen((docSnapshot) {
       final data = (docSnapshot.data() as Map);
@@ -82,9 +127,9 @@ class GameState extends ChangeNotifier {
 
   void _getCardsForPlayer() {
     FirebaseFirestore.instance
-        .collection('Games/$gameId/Players/${player.uid}/Cards')
-        .get()
-        .then((QuerySnapshot snapshot) {
+        .collection('Games/$gameId/Players/${_player.uid}/Cards')
+        .snapshots()
+        .listen((QuerySnapshot snapshot) {
       if (snapshot.docs.isEmpty) return;
       final bingoCards = snapshot.docs.map((DocumentSnapshot doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -98,14 +143,15 @@ class GameState extends ChangeNotifier {
   }
 
   void _updatePlayerStatus(PlayerStatus newStatus) {
-    if (newStatus != player.status) {
-      player.status = newStatus;
+    if (newStatus != _player.status) {
+      _player.status = newStatus;
       FirebaseFirestore.instance
           .collection('Games/$gameId/Players')
-          .doc(player.uid)
+          .doc(_player.uid)
           .update({
-        'status': player.status.value,
+        'status': _player.status.value,
       });
+      _playerStreamController.add(_player);
     }
   }
 }

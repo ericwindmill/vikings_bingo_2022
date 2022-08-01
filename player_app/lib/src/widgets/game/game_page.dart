@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/player.dart';
 import 'package:vikings_bingo/src/widgets/game/bingo_table_header_row.dart';
 
 import '../../game/game_state.dart';
@@ -24,13 +25,21 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       body: Stack(
         children: [
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-              child: Text('Player: ${gameState.player.name}'),
-            ),
-          ),
+          StreamBuilder<Player>(
+              stream: gameState.player,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Align(
+                    alignment: AlignmentDirectional.topCenter,
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+                      child: Text('Player: ${snapshot.data!.name}'),
+                    ),
+                  );
+                }
+                return Text('Getting player info...');
+              }),
           if (gameState.cards.isEmpty)
             Center(
               child: CircularProgressIndicator(),
