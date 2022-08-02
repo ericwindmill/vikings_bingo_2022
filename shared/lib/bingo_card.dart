@@ -23,7 +23,7 @@ class BingoCard {
           return Cell(row: row, col: col, value: 'Free');
         }
 
-        return Cell(row: row, col: col, value: values.removeLast());
+        return Cell(row: row, col: col, value: values.removeAt(0));
       }, growable: false);
     }, growable: false);
 
