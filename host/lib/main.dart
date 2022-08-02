@@ -54,11 +54,13 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Stream<String> gameIdStream = _getCurrentGameStream();
+  String gameId = "Loading...";
   Stream<QuerySnapshot> playersStream = _getGamePlayersStream("none");
   QuerySnapshot? currentPlayers;
   Stream<List<String>> numbersStream = _getNumbersStream("none");
   List<String> currentNumbers = [];
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
+  List<QueryDocumentSnapshot> currentCards = [];
 
   Map<int,int> currentScores = {};
   Map<String, String> winningPlayers = {};
@@ -68,6 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
 
     gameIdStream.listen((gameId) {
+      setState(() {
+        this.gameId = gameId;
+      });
       playersStream = _getGamePlayersStream(gameId);
       playersStream.listen((snapshot) => {
         setState(() {
@@ -84,12 +89,15 @@ class _MyHomePageState extends State<MyHomePage> {
           if (data['status'] == 'waiting for cards') {
             _generateCardsForPlayer(gameId, playerId);
           }
-          if (data['status'] == 'claiming bingo') { // TODO: add cardId to the claim
+          if (data['status'] == 'claiming bingo') {
             _claimBingoForPlayer(gameId, playerId, currentNumbers);
           }
         };
       });
       cardsStream.listen((cardsSnapshot) {
+        setState(() {
+          currentCards = cardsSnapshot.docs;
+        });
         numbersStream.listen((numbers) {
           Map<int,int> result = {};
           for (var card in cardsSnapshot.docs) {
@@ -125,74 +133,34 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text("Current game: "),
-            StreamBuilder(
-              stream: gameIdStream,
-              builder: (buildContext, AsyncSnapshot<String> asyncSnapshot) {
-                if (asyncSnapshot.hasData) {
-                  var gameId = asyncSnapshot.data!;
-                  return Column(children: [ 
-                    Text(
-                      gameId,
-                      style: Theme.of(context).textTheme.headline4,
-                    ),
-                    const Text("Player count: "),
-                    Text(
-                      currentPlayers?.size.toString() ?? "0",
-                      style: Theme.of(context).textTheme.headline4
-                    ),
-                    const Text("Last numbers:"),
-                    StreamBuilder(
-                      stream: numbersStream,
-                      builder: (buildContext, AsyncSnapshot<List<String>> asyncSnapshot) {
-                        if (asyncSnapshot.hasData) {
-                          var numbers = asyncSnapshot.data!;
-                          return Text(
-                            numbers.last,
-                            style: Theme.of(context).textTheme.headline4,
-                          );
-                        }
-
-                        if (asyncSnapshot.hasError) {
-                          return Text('${asyncSnapshot.error}');
-                        }
-                        return const CircularProgressIndicator();
-                      },
-                    ),
-                    const Text("Cards"),
-                    StreamBuilder(
-                      stream: cardsStream,
-                      builder: (buildContext, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
-                        if (asyncSnapshot.hasData) {
-                          var cards = asyncSnapshot.data!.docs;
-                          return Text(
-                            cards.map((c) => c.id).toString(),
-                            style: Theme.of(context).textTheme.bodyText2,
-                          );
-                        }
-
-                        if (asyncSnapshot.hasError) {
-                          return Text('${asyncSnapshot.error}');
-                        }
-                        return const CircularProgressIndicator();
-                      },
-                    ),
-                    const Text("Scores"),
-                    Text(currentScores.toString()),
-                    const Text("Winners"),
-                    Text(winningPlayers.toString()),
-                    ElevatedButton(
-                      child: const Text("Draw"),
-                      onPressed: () {
-                        _generateNextNumber(gameId);
-                      }, 
-                    )
-                  ]);
-                }
-                if (asyncSnapshot.hasError) {
-                  return Text('${asyncSnapshot.error}');
-                }
-                return const CircularProgressIndicator();
-              }
+            Text(
+              gameId,
+              style: Theme.of(context).textTheme.headline4,
+            ),
+            const Text("Player count: "),
+            Text(
+              currentPlayers?.size.toString() ?? "0",
+              style: Theme.of(context).textTheme.headline4
+            ),
+            const Text("Last number(s)s:"),
+            Text(
+              currentNumbers.isNotEmpty ? currentNumbers.last : "-",
+              style: Theme.of(context).textTheme.headline4,
+            ),
+            const Text("Cards"),
+            Text(
+              currentCards.map((c) => c.id).toString(),
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+            const Text("Scores"),
+            Text(currentScores.toString()),
+            const Text("Winners"),
+            Text(winningPlayers.toString()),
+            ElevatedButton(
+              child: const Text("Draw"),
+              onPressed: () {
+                _generateNextNumber(gameId);
+              }, 
             ),
             ElevatedButton(
               child: const Text('Start new game'),
@@ -266,7 +234,7 @@ Stream<QuerySnapshot> _getCardsStream(String gameId) {
 
 Future<void> _generateNextNumber(String gameId) {
   var number = random.nextInt(75).toString();
-  // TODO: check that this number hasn't been drawn yet
+  // TODO: check that this number hasn't been drawn yet, otherwise this is a noop - which looks weird
   return FirebaseFirestore.instance
       .collection('Games')
       .doc(gameId)
