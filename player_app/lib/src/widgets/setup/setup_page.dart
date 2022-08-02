@@ -12,6 +12,7 @@ class SetupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
     final gameId = context.select((GameState s) => s.gameId);
+    final player = context.select((GameState s) => s.player);
 
     return Scaffold(
       body: Padding(
@@ -40,7 +41,7 @@ class SetupPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: spacingUnit * 4),
               child: Text(
-                context.select((GameState value) => gameState.player.name),
+                player.name,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),

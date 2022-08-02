@@ -37,6 +37,9 @@ void main() async {
   );
 }
 
+// This only exists to maintain state when someone refreshes their browser
+// If the uid from the signInAnonymously call exists in Players/{uid}
+// Then the user will join the game with a name already determined.
 Future<Player> _bootstrapPlayer() async {
   final cred = await FirebaseAuth.instance.signInAnonymously();
   Player player;
@@ -55,6 +58,10 @@ Future<Player> _bootstrapPlayer() async {
       uid: cred.user!.uid,
       name: generateRandomPlayerName(),
     );
+    await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(cred.user!.uid)
+        .set(player.toJson());
   } else {
     player = Player.fromJson(firestoreUser);
   }
