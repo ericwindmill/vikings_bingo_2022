@@ -26,13 +26,3 @@ class Player {
     };
   }
 }
-
-class AppUser {
-  final String uid;
-  final String name;
-
-  AppUser({
-    required this.uid,
-    required this.name,
-  });
-}

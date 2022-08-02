@@ -19,7 +19,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Player player = await _bootstrapPlayer();
+  Player player = await _bootstrapPlayer();
 
   runApp(
     MultiProvider(
@@ -27,7 +27,7 @@ void main() async {
         Provider(create: (context) => Palette()),
         ChangeNotifierProvider(
           create: (context) {
-            return GameState();
+            return GameState(player: player);
           },
           lazy: false,
         ),

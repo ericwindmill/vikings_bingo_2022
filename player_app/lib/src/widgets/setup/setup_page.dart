@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/player.dart';
 import 'package:vikings_bingo/src/style/button_style.dart';
 
 import '../../game/game_state.dart';
@@ -13,6 +12,7 @@ class SetupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
     final gameId = context.select((GameState s) => s.gameId);
+    final player = context.select((GameState s) => s.player);
 
     return Scaffold(
       body: Padding(
@@ -40,17 +40,10 @@ class SetupPage extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: spacingUnit * 4),
-              child: StreamBuilder<Player>(
-                  stream: gameState.player,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Text(
-                        snapshot.data!.name,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      );
-                    }
-                    return Text('Getting player info...');
-                  }),
+              child: Text(
+                player.name,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             const SizedBox(
               width: 20,

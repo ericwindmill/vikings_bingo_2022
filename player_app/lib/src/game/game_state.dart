@@ -1,55 +1,45 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/bingo_card.dart';
 import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 
-import '../util/game_util.dart';
-
 class GameState extends ChangeNotifier {
   String? gameId;
   final List<BingoCard> cards = [];
+  Player player;
 
-  late Player _player;
-  final StreamController<Player> _playerStreamController =
-      StreamController<Player>();
-  Stream<Player> get player => _playerStreamController.stream;
-
-  GameState() {
+  GameState({required this.player}) {
     _init();
   }
 
   void _init() async {
-    // Get or create a User, which transcends individual games.
-    // Used mainly to maintain state when a user refreshes their browser
-    final firebaseUser = await FirebaseAuth.instance.signInAnonymously();
-    FirebaseFirestore.instance
-        .collection('Users')
-        .doc(firebaseUser.user!.uid)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
-        // get user from Firestore data
-        final data = snapshot.data() as Map<String, dynamic>;
-        _player = Player(
-          uid: data['uid'],
-          name: data['name'],
-        );
-        _playerStreamController.add(_player);
-      } else {
-        // create new user
-        FirebaseFirestore.instance
-            .collection('Users')
-            .doc(firebaseUser.user!.uid)
-            .set(Player(
-              uid: firebaseUser.user!.uid,
-              name: generateRandomPlayerName(),
-            ).toJson());
-      }
-    });
+    // // Get or create a User, which transcends individual games.
+    // // Used mainly to maintain state when a user refreshes their browser
+    // final firebaseUser = await FirebaseAuth.instance.signInAnonymously();
+    // FirebaseFirestore.instance
+    //     .collection('Users')
+    //     .doc(firebaseUser.user!.uid)
+    //     .snapshots()
+    //     .listen((snapshot) {
+    //   if (snapshot.exists) {
+    //     // get user from Firestore data
+    //     final data = snapshot.data() as Map<String, dynamic>;
+    //     player = Player(
+    //       uid: data['uid'],
+    //       name: data['name'],
+    //     );
+    //   } else {
+    //     // create new user
+    //     FirebaseFirestore.instance
+    //         .collection('Users')
+    //         .doc(firebaseUser.user!.uid)
+    //         .set(Player(
+    //           uid: firebaseUser.user!.uid,
+    //           name: generateRandomPlayerName(),
+    //         ).toJson());
+    //   }
+    // });
 
     // Subscribe to Globals/Bootstrap to determine current game
     FirebaseFirestore.instance
@@ -65,7 +55,21 @@ class GameState extends ChangeNotifier {
     _checkForExistingGameState();
   }
 
-  void _checkForExistingGameState() {}
+  // if a user refreshes the browser from the '/play' route, we need to re-fetch
+  // their card collection
+  void _checkForExistingGameState() {
+    final ref =
+        FirebaseFirestore.instance.doc('Games/$gameId/Players/${player.uid}');
+    ref.snapshots().listen((docSnapshot) {
+      if (docSnapshot.exists) {
+        final status = docSnapshot.data()!['status'];
+        if (statusFromString.containsKey(status) &&
+            statusFromString[status] != PlayerStatus.waitingForCards) {
+          _getCardsForPlayer();
+        }
+      }
+    });
+  }
 
   void joinGame() async {
     // Tell host that a player has joined.
@@ -73,16 +77,11 @@ class GameState extends ChangeNotifier {
     // at location : Games/gameId/Players/playerName/Cards
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
-        .doc(_player.uid)
+        .doc(player.uid)
         .set({
-      'status': _player.status.value,
-      'name': _player.name,
+      'status': player.status.value,
+      'name': player.name,
     });
-
-    // Attempt to get cards, if any exist.
-    // This is helpful for Web, where people can
-    // refresh their browser and it wipes all state
-    _getCardsForPlayer();
 
     _listenForUpdatesToPlayer();
   }
@@ -94,7 +93,7 @@ class GameState extends ChangeNotifier {
   void _listenForUpdatesToPlayer() {
     FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
-        .doc(_player.uid)
+        .doc(player.uid)
         .snapshots()
         .listen((docSnapshot) {
       final data = (docSnapshot.data() as Map);
@@ -127,7 +126,7 @@ class GameState extends ChangeNotifier {
 
   void _getCardsForPlayer() {
     FirebaseFirestore.instance
-        .collection('Games/$gameId/Players/${_player.uid}/Cards')
+        .collection('Games/$gameId/Players/${player.uid}/Cards')
         .snapshots()
         .listen((QuerySnapshot snapshot) {
       if (snapshot.docs.isEmpty) return;
@@ -143,15 +142,14 @@ class GameState extends ChangeNotifier {
   }
 
   void _updatePlayerStatus(PlayerStatus newStatus) {
-    if (newStatus != _player.status) {
-      _player.status = newStatus;
+    if (newStatus != player.status) {
+      player.status = newStatus;
       FirebaseFirestore.instance
           .collection('Games/$gameId/Players')
-          .doc(_player.uid)
+          .doc(player.uid)
           .update({
-        'status': _player.status.value,
+        'status': player.status.value,
       });
-      _playerStreamController.add(_player);
     }
   }
 }
