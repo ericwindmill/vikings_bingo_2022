@@ -24,84 +24,85 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       body: Stack(
         children: [
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-              child: Text('Player: ${gameState.player.name}'),
-            ),
-          ),
           if (gameState.cards.isEmpty)
             Center(
               child: CircularProgressIndicator(),
             ),
           if (gameState.cards.isNotEmpty)
-            PageView(
-              controller: controller,
-              children: [
-                for (var card in gameState.cards)
-                  Stack(
-                    children: [
-                      Align(
-                        alignment: AlignmentDirectional.center,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: spacingUnit * 3),
-                          child: KeepAlivePage(
-                            child: BingoCardTable(
-                              card: card,
-                            ),
+            Align(
+              alignment: AlignmentDirectional.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+                child: Text(
+                  context.select(
+                      (GameState value) => 'Player: ${gameState.player.name}'),
+                ),
+              ),
+            ),
+          PageView(
+            controller: controller,
+            children: [
+              for (var card in gameState.cards)
+                Stack(
+                  children: [
+                    Align(
+                      alignment: AlignmentDirectional.center,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: spacingUnit * 3),
+                        child: KeepAlivePage(
+                          child: BingoCardTable(
+                            card: card,
                           ),
                         ),
                       ),
-                      Align(
-                        alignment: AlignmentDirectional.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: spacingUnit * 10),
-                          child: ValueListenableBuilder<bool>(
-                            valueListenable: card.hasBingo,
-                            builder: (context, bool value, child) {
-                              return ElevatedButton(
-                                onPressed: value
-                                    ? () {
-                                        gameState.submitBingo(card);
-                                      }
-                                    : null,
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.resolveWith(
-                                    (state) {
-                                      if (state
-                                          .contains(MaterialState.disabled)) {
-                                        return palette.primaryLight;
-                                      }
-                                      return palette.buttonBackground;
-                                    },
-                                  ),
-                                  foregroundColor: MaterialStateProperty.all(
-                                      palette.buttonText),
-                                  textStyle: MaterialStateProperty.all(
-                                      Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall),
-                                  padding: MaterialStateProperty.all(
-                                    const EdgeInsets.symmetric(
-                                      horizontal: spacingUnit * 10,
-                                      vertical: spacingUnit * 2,
-                                    ),
+                    ),
+                    Align(
+                      alignment: AlignmentDirectional.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: spacingUnit * 10),
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: card.hasBingo,
+                          builder: (context, bool value, child) {
+                            return ElevatedButton(
+                              onPressed: value
+                                  ? () {
+                                      gameState.submitBingo(card);
+                                    }
+                                  : null,
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith(
+                                  (state) {
+                                    if (state
+                                        .contains(MaterialState.disabled)) {
+                                      return palette.primaryLight;
+                                    }
+                                    return palette.buttonBackground;
+                                  },
+                                ),
+                                foregroundColor: MaterialStateProperty.all(
+                                    palette.buttonText),
+                                textStyle: MaterialStateProperty.all(
+                                    Theme.of(context).textTheme.headlineSmall),
+                                padding: MaterialStateProperty.all(
+                                  const EdgeInsets.symmetric(
+                                    horizontal: spacingUnit * 10,
+                                    vertical: spacingUnit * 2,
                                   ),
                                 ),
-                                child: const Text('BINGO!'),
-                              );
-                            },
-                          ),
+                              ),
+                              child: const Text('BINGO!'),
+                            );
+                          },
                         ),
-                      )
-                    ],
-                  ),
-              ],
-            ),
+                      ),
+                    )
+                  ],
+                ),
+            ],
+          ),
         ],
       ),
     );
