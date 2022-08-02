@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math';
 
+// ignore_for_file: avoid_print
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Bingo 3000 Host'),
     );
   }
 }
@@ -60,6 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
 
   Map<int,int> currentScores = {};
+  Map<String, String> winningPlayers = {};
 
   @override
   void initState() {
@@ -92,8 +94,16 @@ class _MyHomePageState extends State<MyHomePage> {
           Map<int,int> result = {};
           for (var card in cardsSnapshot.docs) {
             var cardId = int.parse(card.id);
-            result[cardId] = _getScoreForCard(numbers, cardId);
-          };
+            var score = _getScoreForCard(numbers, cardId);
+            result[cardId] = score;
+            if (score == 5) {
+              _getPlayerForCard(gameId, cardId).then((winner) {
+                setState(() {
+                  winningPlayers[winner[0]] = winner[1];
+                });
+              });
+            }
+          }
           print('Card scores: $result');
           setState(() {
             currentNumbers = numbers;
@@ -168,6 +178,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const Text("Scores"),
                     Text(currentScores.toString()),
+                    const Text("Winners"),
+                    Text(winningPlayers.toString()),
                     ElevatedButton(
                       child: const Text("Draw"),
                       onPressed: () {
@@ -208,8 +220,7 @@ Future<void> _setCurrentGameId(String gameId) {
 }
 Stream<String> _getCurrentGameStream() {
   return FirebaseFirestore.instance
-      .collection('Globals')
-      .doc('Bootstrap')
+      .doc('Globals/Bootstrap')
       .snapshots().map((docSnapshot) {
       if (docSnapshot.exists) {
         final data = docSnapshot.data() as Map<String, dynamic>;
@@ -325,4 +336,21 @@ int _getScoreForCard(List<String> numbers, int cardId) {
     }
   }
   return maxLength;
+}
+
+Future<List<String>> _getPlayerForCard(String gameId, int cardId) async {
+  var path = '/Games/$gameId';
+  var snapshot = await FirebaseFirestore.instance
+    .collectionGroup("Cards")
+    .orderBy(FieldPath.documentId)
+    .startAt([path])
+    .endAt(['$path\uf8ff'])
+    .get();
+  var doc = snapshot.docs.firstWhere((card) => card.id == cardId.toString());
+  var uid = doc.reference.parent.parent!.id;
+  var player = await doc.reference.parent.parent!.get();
+  assert(player.exists);
+  var data = player.data() as Map;
+
+  return [uid, data["name"]];
 }
