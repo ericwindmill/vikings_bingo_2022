@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'firebase_options.dart';
-import 'package:uuid/uuid.dart';
 import 'dart:math';
 
 // ignore_for_file: avoid_print
@@ -24,6 +23,7 @@ void main() async {
   //     debugPrint(e.toString());
   //   }
   // }
+  
   runApp(const MyApp());
 }
 
@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
           if (data['status'] == 'claiming bingo') {
             _claimBingoForPlayer(gameId, playerId, currentNumbers);
           }
-        };
+        }
       });
       cardsStream.listen((cardsSnapshot) {
         setState(() {
@@ -165,9 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               child: const Text('Start new game'),
               onPressed: () {
-                // TODO: find a simpler ID generator
-                var uuid = new Uuid();
-                _setCurrentGameId(uuid.v1());
+                _startNewGame();
               }
             ),
           ],
@@ -177,9 +175,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-Future<void> _setCurrentGameId(String gameId) {
+Future<void> _startNewGame() {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
+
+  var gameId = FirebaseFirestore.instance.collection("Games").doc().id;
 
   batch.update(db.collection('Globals').doc('Bootstrap'), { 'currentGame': gameId });
   batch.set(db.collection('Games').doc(gameId), { 'createdAt': Timestamp.now() });
