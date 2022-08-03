@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<String> gameIdStream = _getCurrentGameStream();
   String gameId = "Loading...";
   Stream<QuerySnapshot> playersStream = _getGamePlayersStream("none");
-  QuerySnapshot? currentPlayers;
+  List<QueryDocumentSnapshot> currentPlayers = [];
   Stream<List<String>> numbersStream = _getNumbersStream("none");
   List<String> currentNumbers = [];
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       playersStream = _getGamePlayersStream(gameId);
       playersStream.listen((snapshot) => {
         setState(() {
-          currentPlayers = snapshot;
+          currentPlayers = snapshot.docs;
         })
       });
       numbersStream = _getNumbersStream(gameId);
@@ -105,10 +105,9 @@ class _MyHomePageState extends State<MyHomePage> {
             var score = _getScoreForCard(numbers, cardId);
             result[cardId] = score;
             if (score == 5) {
-              _getPlayerForCard(gameId, cardId).then((winner) {
-                setState(() {
-                  winningPlayers[winner[0]] = winner[1];
-                });
+              var winner = _getPlayerForCard(currentCards, currentPlayers, cardId);
+              setState(() {
+                winningPlayers.addEntries([winner]);
               });
             }
           }
@@ -139,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const Text("Player count: "),
             Text(
-              currentPlayers?.size.toString() ?? "0",
+              currentPlayers.length.toString(),
               style: Theme.of(context).textTheme.headline4
             ),
             const Text("Last number(s):"),
@@ -312,19 +311,11 @@ int _getScoreForCard(List<String> numbers, int cardId) {
   return maxLength;
 }
 
-Future<List<String>> _getPlayerForCard(String gameId, int cardId) async {
-  var path = '/Games/$gameId';
-  var snapshot = await FirebaseFirestore.instance
-    .collectionGroup("Cards")
-    .orderBy(FieldPath.documentId)
-    .startAt([path])
-    .endAt(['$path\uf8ff'])
-    .get();
-  var doc = snapshot.docs.firstWhere((card) => card.id == cardId.toString());
-  var uid = doc.reference.parent.parent!.id;
-  var player = await doc.reference.parent.parent!.get();
-  assert(player.exists);
-  var data = player.data() as Map;
+MapEntry<String,String> _getPlayerForCard(List<QueryDocumentSnapshot> cards, List<QueryDocumentSnapshot> players, int cardId) {
+  var cardDoc = cards.firstWhere((doc) => doc.id == cardId.toString());
+  var uid = cardDoc.reference.parent.parent!.id;
+  var playerDoc = players.firstWhere((doc) => doc.id == uid);
+  var data = playerDoc.data() as Map;
 
-  return [uid, data["name"]];
+  return MapEntry(uid, data["name"]);
 }
