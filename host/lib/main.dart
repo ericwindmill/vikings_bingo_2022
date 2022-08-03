@@ -23,7 +23,7 @@ void main() async {
   //     debugPrint(e.toString());
   //   }
   // }
-  
+
   runApp(const MyApp());
 }
 
@@ -142,10 +142,13 @@ class _MyHomePageState extends State<MyHomePage> {
               currentPlayers?.size.toString() ?? "0",
               style: Theme.of(context).textTheme.headline4
             ),
-            const Text("Last number(s)s:"),
-            Text(
-              currentNumbers.isNotEmpty ? currentNumbers.last : "-",
-              style: Theme.of(context).textTheme.headline4,
+            const Text("Last number(s):"),
+            Row(
+              children: currentNumbers.reversed.take(10).toList().asMap().entries.map((entry) {
+                return (entry.key==0) 
+                  ? Text(entry.value, style: Theme.of(context).textTheme.headline3)
+                  : Text(" ${entry.value}", style: TextStyle(fontSize: 25.0-2.0*entry.key));
+              }).toList()
             ),
             const Text("Cards"),
             Text(
@@ -166,6 +169,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Text('Start new game'),
               onPressed: () {
                 _startNewGame();
+                setState(() {
+                  winningPlayers.clear();
+                });
               }
             ),
           ],
