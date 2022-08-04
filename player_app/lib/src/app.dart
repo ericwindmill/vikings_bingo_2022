@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
+import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
@@ -17,25 +18,37 @@ class BingoPlayerApp extends StatefulWidget {
 }
 
 class _BingoPlayerAppState extends State<BingoPlayerApp> {
-  final Stream<String?> gameIdStream = FirestoreService.gameIdStream();
-  String? gameId;
+  final Stream<String> gameIdStream = FirestoreService.gameIdStream();
+  Stream<Player> playerStream = FirestoreService.getPlayerStream('none');
+  String gameId = 'none';
+  late Player player;
+
+  _BingoPlayerAppState() {
+    player = widget.player;
+  }
 
   @override
   void initState() {
     super.initState();
-    // when the app boots OR the gameId updates, get the gameId and player,
-    // and set them as variable that we'll use for everything else.
     gameIdStream.listen((gId) async {
-      if (gameId == gId) {
-        // Handle same game still going on
-      } else {
-        // when gameId updates, we want to re-load the entire app,
-        // and kick players back to the 'setup page' with the next id
+      if (gId != gameId) {
+        // On new game: update GameId And Player's status to inLobby
+        FirestoreService.updatePlayerStatus(
+            PlayerStatus.inLobby, player, gameId);
         setState(() {
           gameId = gId;
         });
       }
+
+      playerStream = FirestoreService.getPlayerStream(gId);
+      playerStream.listen((Player p) {
+        setState(() {
+          player = p;
+        });
+      });
     });
+
+    FirestoreService.getPlayerStream(gameId).listen((Player player) {});
   }
 
   @override
@@ -57,7 +70,7 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
         }
 
         if (routeSettings.name == '/play') {
-          if (gameId == null) {
+          if (gameId == 'none') {
             return MaterialPageRoute(
               builder: (context) => Scaffold(
                 body: Center(
@@ -70,7 +83,7 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
           return MaterialPageRoute(
             builder: (context) => GamePage(
               player: widget.player,
-              gameId: gameId!,
+              gameId: gameId,
             ),
           );
         }

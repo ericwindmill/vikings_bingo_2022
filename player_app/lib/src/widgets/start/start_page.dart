@@ -42,10 +42,12 @@ class StartPage extends StatelessWidget {
                 OutlinedButton(
                   style: outlineButtonStyle,
                   onPressed: () {
+                    // if the player refreshed the browser, don't go through
+                    // setup again, just get back to the game
                     if (player.status == PlayerStatus.inLobby) {
-                      Navigator.pushReplacementNamed(context, 'play');
-                    } else {
                       Navigator.pushReplacementNamed(context, '/setup');
+                    } else {
+                      Navigator.pushReplacementNamed(context, '/play');
                     }
                   },
                   child: const Text('Start'),

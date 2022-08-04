@@ -29,9 +29,9 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _listenForPlayerStatusUpdates() {
-    FirestoreService.getPlayerStatusUpdates(widget.gameId).listen(
-      (PlayerStatus? event) async {
-        if (event == PlayerStatus.falseBingo) {
+    FirestoreService.getPlayerStream(widget.gameId).listen(
+      (Player player) async {
+        if (player.status == PlayerStatus.falseBingo) {
           await showDialog(
               context: context,
               builder: (context) {
@@ -89,8 +89,9 @@ class _GamePageState extends State<GamePage> {
             widget.gameId,
           );
         }
-        if (event == PlayerStatus.wonBingo) {
+        if (player.status == PlayerStatus.wonBingo) {
           print('TODO: show winner animation');
+          print('TODO: show host message');
         }
       },
     );
