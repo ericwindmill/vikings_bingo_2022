@@ -26,6 +26,8 @@ class FirestoreService {
         .doc(player.uid)
         .update({
       'status': player.status.value,
+      if (player.status == PlayerStatus.claimingBingo)
+        'bingoClaimTime': FieldValue.serverTimestamp(),
     });
   }
 
