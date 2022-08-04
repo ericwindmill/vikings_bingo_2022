@@ -63,7 +63,6 @@ class _MyHomePageState extends State<MyHomePage> {
   List<QueryDocumentSnapshot> currentCards = [];
 
   Map<int,int> currentScores = {};
-  Map<String, String> winningPlayers = {};
 
   @override
   void initState() {
@@ -104,12 +103,6 @@ class _MyHomePageState extends State<MyHomePage> {
             var cardId = int.parse(card.id);
             var score = _getScoreForCard(numbers, cardId);
             result[cardId] = score;
-            if (score == 5) {
-              var winner = _getPlayerForCard(currentCards, currentPlayers, cardId);
-              setState(() {
-                winningPlayers.addEntries([winner]);
-              });
-            }
           }
           print('Card scores: $result');
           setState(() {
@@ -136,12 +129,23 @@ class _MyHomePageState extends State<MyHomePage> {
               gameId,
               style: Theme.of(context).textTheme.headline4,
             ),
+            ElevatedButton(
+              child: const Text('Start new game'),
+              onPressed: () {
+                _startNewGame();
+              }
+            ),
             const Text("Player count: "),
             Text(
               currentPlayers.length.toString(),
               style: Theme.of(context).textTheme.headline4
             ),
-            const Text("Last number(s):"),
+            const Text("Card count"),
+            Text(
+              currentCards.length.toString(),
+              style: Theme.of(context).textTheme.headline3,
+            ),
+            const Text("Latest number(s):"),
             Row(
               children: currentNumbers.reversed.take(10).toList().asMap().entries.map((entry) {
                 return (entry.key==0) 
@@ -149,29 +153,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   : Text(" ${entry.value}", style: TextStyle(fontSize: 25.0-2.0*entry.key));
               }).toList()
             ),
-            const Text("Cards"),
-            Text(
-              currentCards.map((c) => c.id).toString(),
-              style: Theme.of(context).textTheme.bodyText2,
-            ),
-            const Text("Scores"),
-            Text(currentScores.toString()),
-            const Text("Winners"),
-            Text(winningPlayers.toString()),
             ElevatedButton(
               child: const Text("Draw"),
               onPressed: () {
                 _generateNextNumber(gameId);
               }, 
             ),
+            const Text("Scores"),
+            Text(currentScores.toString()),
             ElevatedButton(
-              child: const Text('Start new game'),
+              child: const Text("Show winners"),
               onPressed: () {
-                _startNewGame();
-                setState(() {
-                  winningPlayers.clear();
-                });
-              }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => FullScreenDialog(gameId: gameId),
+                    fullscreenDialog: true,
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -179,6 +179,67 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+class FullScreenDialog extends StatelessWidget {
+  String gameId;
+
+  FullScreenDialog({Key? key, required this.gameId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Winners'),
+      ),
+      body: Center(
+        child: StreamBuilder(
+          stream: _getWinners(gameId),
+          builder: (context, asyncSnapshot) {
+            if (asyncSnapshot.hasData) {
+              var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
+              print('Got ${winners.length} winners: $winners');
+              return ListView(
+                children: winners.map((winner) {
+                  var data = winner.data()! as Map;
+                  var name = data["name"];
+                  var time = (data['bingoClaimTime'] as Timestamp).toDate();
+                  var msg = (data['hostMessage'] ?? '-');
+                  return ListTile(
+                    isThreeLine: true,
+                    title: Text(winner.id),
+                    subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.sports_martial_arts_rounded),
+                      onPressed: () {
+                        db.doc('Games/$gameId/Players/${winner.id}').update({
+                          'hostMessage': Random().nextInt(100000).toString()
+                        });
+                      },
+                    ),
+                  );
+                }).toList()
+              );
+            }
+            if (asyncSnapshot.hasError) {
+              return Text('Error: ${asyncSnapshot.error}');
+            }
+            return const CircularProgressIndicator();
+          },)
+      ),
+    );
+  }
+}
+
+var db = FirebaseFirestore.instance;
+//void _getWinners(List<QueryDocumentSnapshot> players) {
+Stream<List<QueryDocumentSnapshot>> _getWinners(String gameId) {
+  return db.collection('Games/$gameId/Players')
+    .where('status', isEqualTo: 'wonBingo')
+    .orderBy('bingoClaimTime', descending: true)
+    .snapshots()
+    .map((event) => event.docs);
+}
+
 
 Future<void> _startNewGame() {
   var db = FirebaseFirestore.instance;
