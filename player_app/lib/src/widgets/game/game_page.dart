@@ -25,71 +25,75 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    _shamePlayerIfNecessary();
+    _listenForPlayerStatusUpdates();
   }
 
-  void _shamePlayerIfNecessary() {
-    FirestoreService.getPlayerStatusUpdates(widget.gameId)
-        .listen((PlayerStatus? event) async {
-      if (event == PlayerStatus.falseBingo) {
-        await showDialog(
-            context: context,
-            builder: (context) {
-              int second = 3;
-              return StatefulBuilder(builder: (context, setState) {
-                Timer.periodic(Duration(milliseconds: 1500), (Timer timer) {
-                  if (second > 0) {
-                    setState(() {
-                      second--;
-                    });
-                  } else {
-                    timer.cancel();
-                  }
-                });
+  void _listenForPlayerStatusUpdates() {
+    FirestoreService.getPlayerStatusUpdates(widget.gameId).listen(
+      (PlayerStatus? event) async {
+        if (event == PlayerStatus.falseBingo) {
+          await showDialog(
+              context: context,
+              builder: (context) {
+                int second = 3;
+                return StatefulBuilder(builder: (context, setState) {
+                  Timer.periodic(Duration(milliseconds: 1500), (Timer timer) {
+                    if (second > 0) {
+                      setState(() {
+                        second--;
+                      });
+                    } else {
+                      timer.cancel();
+                    }
+                  });
 
-                return AlertDialog(
-                  content: Image.asset('ec5.gif'),
-                  actions: [
-                    ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith(
-                          (state) {
-                            if (state.contains(MaterialState.disabled)) {
-                              return palette.primaryLight;
-                            }
-                            return palette.buttonBackground;
-                          },
-                        ),
-                        foregroundColor:
-                            MaterialStateProperty.all(palette.buttonText),
-                        textStyle: MaterialStateProperty.all(
-                            Theme.of(context).textTheme.headlineSmall),
-                        padding: MaterialStateProperty.all(
-                          const EdgeInsets.symmetric(
-                            horizontal: spacingUnit * 10,
-                            vertical: spacingUnit * 2,
+                  return AlertDialog(
+                    content: Image.asset('ec5.gif'),
+                    actions: [
+                      ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.resolveWith(
+                            (state) {
+                              if (state.contains(MaterialState.disabled)) {
+                                return palette.primaryLight;
+                              }
+                              return palette.buttonBackground;
+                            },
+                          ),
+                          foregroundColor:
+                              MaterialStateProperty.all(palette.buttonText),
+                          textStyle: MaterialStateProperty.all(
+                              Theme.of(context).textTheme.headlineSmall),
+                          padding: MaterialStateProperty.all(
+                            const EdgeInsets.symmetric(
+                              horizontal: spacingUnit * 10,
+                              vertical: spacingUnit * 2,
+                            ),
                           ),
                         ),
-                      ),
-                      onPressed: second == 0
-                          ? () {
-                              Navigator.of(context).pop();
-                            }
-                          : null,
-                      child: Text('Dismiss in $second seconds...'),
-                    )
-                  ],
-                );
+                        onPressed: second == 0
+                            ? () {
+                                Navigator.of(context).pop();
+                              }
+                            : null,
+                        child: Text('Dismiss in $second seconds...'),
+                      )
+                    ],
+                  );
+                });
               });
-            });
 
-        FirestoreService.updatePlayerStatus(
-          PlayerStatus.playing,
-          widget.player,
-          widget.gameId,
-        );
-      }
-    });
+          FirestoreService.updatePlayerStatus(
+            PlayerStatus.playing,
+            widget.player,
+            widget.gameId,
+          );
+        }
+        if (event == PlayerStatus.wonBingo) {
+          print('TODO: show winner animation');
+        }
+      },
+    );
   }
 
   final controller = PageController();

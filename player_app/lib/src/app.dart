@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
 import 'package:vikings_bingo/firestore_service.dart';
-import 'package:vikings_bingo/src/widgets/setup/setup_page.dart';
+import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
 import 'widgets/game/game_page.dart';
-import 'widgets/start/start_page.dart';
+import 'widgets/setup/setup_page.dart';
 
 class BingoPlayerApp extends StatefulWidget {
   final Player player;
@@ -29,7 +29,6 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
       // when gameId updates, we want to re-load the entire app
       setState(() {
         gameId = gId;
-        // todo: reload game or something
       });
     });
   }
@@ -38,15 +37,38 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       scrollBehavior: AppScrollBehavior(),
-      routes: {
-        '/': (context) => const StartPage(),
-        '/setup': (context) => SetupPage(player: widget.player),
-        '/play': (context) => GamePage(
+      onGenerateRoute: (RouteSettings routeSettings) {
+        if (routeSettings.name == '/') {
+          return MaterialPageRoute(builder: (context) => StartPage());
+        }
+
+        if (routeSettings.name == '/setup') {
+          return MaterialPageRoute(
+            builder: (context) => SetupPage(
+              player: widget.player,
+            ),
+          );
+        }
+
+        if (routeSettings.name == '/play') {
+          if (gameId == null) {
+            return MaterialPageRoute(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            );
+          }
+
+          return MaterialPageRoute(
+            builder: (context) => GamePage(
               player: widget.player,
               gameId: gameId!,
             ),
+          );
+        }
       },
-      initialRoute: '/',
       theme: ThemeData(
         textTheme: GoogleFonts.pressStart2pTextTheme(
           const TextTheme(
