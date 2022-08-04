@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:shared/player.dart';
+import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
 
 import '../../style/button_style.dart';
 import '../shared/shooting_stars_background.dart';
 
 class StartPage extends StatelessWidget {
-  const StartPage({Key? key}) : super(key: key);
+  final Player player;
+
+  const StartPage({
+    Key? key,
+    required this.player,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +42,11 @@ class StartPage extends StatelessWidget {
                 OutlinedButton(
                   style: outlineButtonStyle,
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/setup');
+                    if (player.status == PlayerStatus.inLobby) {
+                      Navigator.pushReplacementNamed(context, 'play');
+                    } else {
+                      Navigator.pushReplacementNamed(context, '/setup');
+                    }
                   },
                   child: const Text('Start'),
                 ),
