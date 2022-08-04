@@ -26,10 +26,15 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
     // when the app boots OR the gameId updates, get the gameId and player,
     // and set them as variable that we'll use for everything else.
     gameIdStream.listen((gId) async {
-      // when gameId updates, we want to re-load the entire app
-      setState(() {
-        gameId = gId;
-      });
+      if (gameId == gId) {
+        // Handle same game still going on
+      } else {
+        // when gameId updates, we want to re-load the entire app,
+        // and kick players back to the 'setup page' with the next id
+        setState(() {
+          gameId = gId;
+        });
+      }
     });
   }
 
@@ -39,7 +44,8 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
       scrollBehavior: AppScrollBehavior(),
       onGenerateRoute: (RouteSettings routeSettings) {
         if (routeSettings.name == '/') {
-          return MaterialPageRoute(builder: (context) => StartPage());
+          return MaterialPageRoute(
+              builder: (context) => StartPage(player: widget.player));
         }
 
         if (routeSettings.name == '/setup') {

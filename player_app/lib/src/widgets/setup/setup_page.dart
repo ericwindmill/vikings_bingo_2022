@@ -61,7 +61,9 @@ class SetupPage extends StatelessWidget {
                       onPressed: snapshot.data != null
                           ? () {
                               FirestoreService.joinGame(
-                                  gameId: gameId!, player: player);
+                                gameId: gameId!,
+                                player: player,
+                              );
                               Navigator.pushReplacementNamed(context, '/play');
                             }
                           : null,

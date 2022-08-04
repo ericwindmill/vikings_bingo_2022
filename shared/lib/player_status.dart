@@ -1,4 +1,5 @@
 enum PlayerStatus {
+  inLobby,
   waitingForCards,
   cardsDealt,
   playing,
@@ -8,14 +9,16 @@ enum PlayerStatus {
 }
 
 const statusFromString = <String, PlayerStatus>{
-  playing: PlayerStatus.playing,
+  inLobby: PlayerStatus.inLobby,
   waitingForCards: PlayerStatus.waitingForCards,
   cardsDealt: PlayerStatus.cardsDealt,
+  playing: PlayerStatus.playing,
   claimingBingo: PlayerStatus.claimingBingo,
   falseBingo: PlayerStatus.falseBingo,
   wonBingo: PlayerStatus.wonBingo,
 };
 
+const String inLobby = 'in lobby';
 const String playing = 'playing';
 const String waitingForCards = 'waiting for cards';
 const String cardsDealt = 'cards dealt';
@@ -26,14 +29,16 @@ const String falseBingo = 'false bingo';
 extension ReadableStatus on PlayerStatus {
   String get value {
     switch (this) {
-      case PlayerStatus.playing:
-        return playing;
+      case PlayerStatus.inLobby:
+        return inLobby;
       case PlayerStatus.waitingForCards:
         return waitingForCards;
-      case PlayerStatus.claimingBingo:
-        return claimingBingo;
       case PlayerStatus.cardsDealt:
         return cardsDealt;
+      case PlayerStatus.playing:
+        return playing;
+      case PlayerStatus.claimingBingo:
+        return claimingBingo;
       case PlayerStatus.wonBingo:
         return wonBingo;
       case PlayerStatus.falseBingo:
