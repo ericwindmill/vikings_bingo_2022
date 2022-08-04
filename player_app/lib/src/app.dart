@@ -1,13 +1,38 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared/player.dart';
+import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/setup/setup_page.dart';
 
 import 'widgets/game/game_page.dart';
 import 'widgets/start/start_page.dart';
 
-class BingoPlayerApp extends StatelessWidget {
-  const BingoPlayerApp({Key? key}) : super(key: key);
+class BingoPlayerApp extends StatefulWidget {
+  final Player player;
+  const BingoPlayerApp({Key? key, required this.player}) : super(key: key);
+
+  @override
+  State<BingoPlayerApp> createState() => _BingoPlayerAppState();
+}
+
+class _BingoPlayerAppState extends State<BingoPlayerApp> {
+  final Stream<String?> gameIdStream = FirestoreService.gameIdStream();
+  String? gameId;
+
+  @override
+  void initState() {
+    super.initState();
+    // when the app boots OR the gameId updates, get the gameId and player,
+    // and set them as variable that we'll use for everything else.
+    gameIdStream.listen((gId) async {
+      // when gameId updates, we want to re-load the entire app
+      setState(() {
+        gameId = gId;
+        // todo: reload game or something
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +40,11 @@ class BingoPlayerApp extends StatelessWidget {
       scrollBehavior: AppScrollBehavior(),
       routes: {
         '/': (context) => const StartPage(),
-        '/setup': (context) => const SetupPage(),
-        '/play': (context) => const GamePage(),
+        '/setup': (context) => SetupPage(player: widget.player),
+        '/play': (context) => GamePage(
+              player: widget.player,
+              gameId: gameId!,
+            ),
       },
       initialRoute: '/',
       theme: ThemeData(

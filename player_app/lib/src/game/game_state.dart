@@ -14,33 +14,6 @@ class GameState extends ChangeNotifier {
   }
 
   void _init() async {
-    // // Get or create a User, which transcends individual games.
-    // // Used mainly to maintain state when a user refreshes their browser
-    // final firebaseUser = await FirebaseAuth.instance.signInAnonymously();
-    // FirebaseFirestore.instance
-    //     .collection('Users')
-    //     .doc(firebaseUser.user!.uid)
-    //     .snapshots()
-    //     .listen((snapshot) {
-    //   if (snapshot.exists) {
-    //     // get user from Firestore data
-    //     final data = snapshot.data() as Map<String, dynamic>;
-    //     player = Player(
-    //       uid: data['uid'],
-    //       name: data['name'],
-    //     );
-    //   } else {
-    //     // create new user
-    //     FirebaseFirestore.instance
-    //         .collection('Users')
-    //         .doc(firebaseUser.user!.uid)
-    //         .set(Player(
-    //           uid: firebaseUser.user!.uid,
-    //           name: generateRandomPlayerName(),
-    //         ).toJson());
-    //   }
-    // });
-
     // Subscribe to Globals/Bootstrap to determine current game
     FirebaseFirestore.instance
         .collection('Globals')
@@ -96,9 +69,10 @@ class GameState extends ChangeNotifier {
         .doc(player.uid)
         .snapshots()
         .listen((docSnapshot) {
-      final data = (docSnapshot.data() as Map);
-      final status = data['status'];
+      final data = (docSnapshot.data());
+      final status = data!['status'];
       var playerStatus = statusFromString[status];
+      player.status = playerStatus!;
       switch (playerStatus) {
         case PlayerStatus.waitingForCards:
           break;
@@ -115,11 +89,8 @@ class GameState extends ChangeNotifier {
           // TODO: Handle this case.
           break;
         case PlayerStatus.falseBingo:
-          // TODO: Handle this case.
-          // https://www.google.com/search?q=did+you+really+though+meme
+          notifyListeners();
           break;
-        case null:
-          print("oopsies, that ain't a status");
       }
     });
   }

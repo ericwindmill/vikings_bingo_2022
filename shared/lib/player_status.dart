@@ -12,7 +12,8 @@ const statusFromString = <String, PlayerStatus>{
   waitingForCards: PlayerStatus.waitingForCards,
   cardsDealt: PlayerStatus.cardsDealt,
   claimingBingo: PlayerStatus.claimingBingo,
-  'won bingo': PlayerStatus.wonBingo,
+  falseBingo: PlayerStatus.falseBingo,
+  wonBingo: PlayerStatus.wonBingo,
 };
 
 const String playing = 'playing';
