@@ -2,10 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared/player.dart';
 import 'package:vikings_bingo/src/app.dart';
-import 'package:vikings_bingo/src/style/palette.dart';
 
 import 'firebase_options.dart';
 import 'src/util/game_util.dart';
@@ -16,25 +14,19 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseAuth.instance.signInAnonymously();
   final player = await bootstrapPlayer();
 
   runApp(
-    MultiProvider(
-      providers: [
-        Provider(create: (context) => Palette()),
-      ],
-      child: BingoPlayerApp(player: player),
-    ),
+    BingoPlayerApp(player: player),
   );
 }
 
 Future<Player> bootstrapPlayer() async {
-  final uid = FirebaseAuth.instance.currentUser!.uid;
+  final cred = await FirebaseAuth.instance.signInAnonymously();
   Player player;
   final firestoreUser = await FirebaseFirestore.instance
       .collection('Users')
-      .doc(uid)
+      .doc(cred.user!.uid)
       .get()
       .then((value) {
     return value.data();
@@ -44,12 +36,12 @@ Future<Player> bootstrapPlayer() async {
 // create the player
   if (firestoreUser == null) {
     player = Player(
-      uid: uid,
+      uid: cred.user!.uid,
       name: generateRandomPlayerName(),
     );
     await FirebaseFirestore.instance
         .collection('Users')
-        .doc(uid)
+        .doc(cred.user!.uid)
         .set(player.toJson());
   } else {
     player = Player.fromJson(firestoreUser);

@@ -17,7 +17,7 @@ class Player {
     return Player(
       uid: json['uid'],
       name: json['name'],
-      status: json['status'],
+      status: statusFromString[json['status']] ?? PlayerStatus.inLobby,
       hostMessage: json['hostMessage'],
     );
   }

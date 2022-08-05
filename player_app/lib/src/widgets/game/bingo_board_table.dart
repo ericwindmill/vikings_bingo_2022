@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared/bingo_card.dart';
 import 'package:shared/cell.dart';
 import 'package:vikings_bingo/src/widgets/shared/shadow.dart';
 
-import '../../style/palette.dart';
 import 'bingo_table_header_row.dart';
 import 'bingo_table_rows.dart';
 
@@ -19,8 +17,6 @@ class BingoCardTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.read<Palette>();
-
     return GradientDropShadow(
       backgroundColor: palette.primaryLight,
       offset: Offset(-5, 6),

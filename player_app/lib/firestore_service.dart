@@ -5,12 +5,23 @@ import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 
 class FirestoreService {
-  static void joinGame({required String gameId, required Player player}) async {
+  static void joinLobby(
+      {required String gameId, required Player player}) async {
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
         .doc(player.uid)
         .set({
-      'status': player.status.value,
+      'status': PlayerStatus.inLobby.value,
+      'name': player.name,
+    });
+  }
+
+  static void joinGame({required String gameId, required Player player}) async {
+    await FirebaseFirestore.instance
+        .collection('Games/$gameId/Players')
+        .doc(player.uid)
+        .update({
+      'status': PlayerStatus.waitingForCards.value,
       'name': player.name,
     });
   }
