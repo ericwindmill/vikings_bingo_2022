@@ -1,3 +1,4 @@
+import 'package:charts_painter/chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -160,7 +161,18 @@ class _MyHomePageState extends State<MyHomePage> {
               }, 
             ),
             const Text("Scores"),
-            Text(currentScores.toString()),
+            //Text(currentScores.toString()),
+            AnimatedChart(
+              state: ChartState.bar(
+                ChartData.fromList(
+                  //<double>[1, 3, 4, 2, 7, 6, 2, 5, 4].map((e) => BarValue<void>(e)).toList(),
+                  //currentScores.values.map((score) => BarValue(1.0*score)).toList()
+                  [1,2,3,4,5].map((score) => BarValue(1.0 * currentScores.values.where((e) => e == score).length)).toList(),
+                  axisMax: 1.0*currentScores.length
+                ),
+              ),
+              duration: const Duration(seconds: 1),
+            ),
             ElevatedButton(
               child: const Text("Show winners"),
               onPressed: () {
