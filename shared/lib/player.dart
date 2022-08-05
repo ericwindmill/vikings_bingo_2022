@@ -13,9 +13,9 @@ class Player {
     this.hostMessage,
   });
 
-  static Player fromJson(Map<String, dynamic> json) {
+  static Player fromJson(Map<String, dynamic> json, {String? uid}) {
     return Player(
-      uid: json['uid'],
+      uid: json['uid'] ?? uid,
       name: json['name'],
       status: statusFromString[json['status']] ?? PlayerStatus.inLobby,
       hostMessage: json['hostMessage'],
@@ -28,5 +28,13 @@ class Player {
       'uid': uid,
       'status': status.value,
     };
+  }
+
+  bool get isInGame {
+    return status == PlayerStatus.waitingForCards ||
+        status == PlayerStatus.cardsDealt ||
+        status == PlayerStatus.playing ||
+        status == PlayerStatus.falseBingo ||
+        status == PlayerStatus.claimingBingo;
   }
 }

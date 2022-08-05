@@ -20,8 +20,7 @@ class SetupPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: spacingUnit * 3),
         child: StreamBuilder<String?>(
-          stream: gameIdStream,
-          initialData: 'waiting for game...',
+          stream: FirestoreService.gameIdStream(),
           builder: (context, gameIdSnapshot) {
             final gameId = gameIdSnapshot.data;
             return Column(
@@ -37,7 +36,9 @@ class SetupPage extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: spacingUnit * 4),
                   child: Text(
-                    gameId!,
+                    gameIdSnapshot.connectionState == ConnectionState.waiting
+                        ? 'Waiting for game...'
+                        : gameId!,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -57,29 +58,20 @@ class SetupPage extends StatelessWidget {
                   height: 20,
                 ),
                 Center(
-                  child: StreamBuilder<Player>(
-                    stream: null,
-                    builder: (context, playerSnapshot) {
-                      return OutlinedButton(
-                        style: outlineButtonStyle,
-                        onPressed:
-                            (playerSnapshot.hasData && gameIdSnapshot.hasData)
-                                ? () {
-                                    FirestoreService.joinGame(
-                                      gameId: gameId,
-                                      player: playerSnapshot.data!,
-                                    );
-                                    Navigator.pushReplacementNamed(
-                                        context, '/play');
-                                  }
-                                : null,
-                        child: const Text(
-                          'Join Game',
-                        ),
-                      );
-                    },
+                  child: OutlinedButton(
+                    style: outlineButtonStyle,
+                    onPressed: (gameIdSnapshot.hasData)
+                        ? () {
+                            FirestoreService.joinGame(
+                              gameId: gameId!,
+                              player: player,
+                            );
+                            Navigator.pushReplacementNamed(context, '/play');
+                          }
+                        : null,
+                    child: const Text('Join Game'),
                   ),
-                )
+                ),
               ],
             );
           },

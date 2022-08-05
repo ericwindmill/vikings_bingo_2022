@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
 import 'package:vikings_bingo/firestore_service.dart';
@@ -19,16 +20,18 @@ class BingoPlayerApp extends StatefulWidget {
 class _BingoPlayerAppState extends State<BingoPlayerApp> {
   final Stream<String> gameIdStream = FirestoreService.gameIdStream();
   String gameId = 'none';
+  bool playerHasCards = false;
 
   @override
   void initState() {
     super.initState();
     gameIdStream.listen((gId) async {
-      // On new game: update GameId And add player to lobby.
-      // They haven't yet started playing
-      FirestoreService.joinLobby(gameId: gId, player: widget.player);
+      // On new game: update GameId And add player to "lobby".
+      await FirestoreService.joinLobby(gameId: gId, player: widget.player);
+      final hasCards = await FirestoreService.playerHasCards(gameId);
       setState(() {
         gameId = gId;
+        playerHasCards = hasCards;
       });
     });
   }
@@ -38,10 +41,12 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
     return MaterialApp(
       scrollBehavior: AppScrollBehavior(),
       onGenerateRoute: (RouteSettings routeSettings) {
+        print(playerHasCards);
         if (routeSettings.name == '/') {
           return MaterialPageRoute(
             builder: (context) => StartPage(
               player: widget.player,
+              shouldSkipSetup: playerHasCards,
             ),
           );
         }

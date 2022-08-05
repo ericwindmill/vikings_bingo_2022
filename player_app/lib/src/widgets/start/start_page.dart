@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared/player.dart';
-import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
 
 import '../../style/button_style.dart';
@@ -8,10 +7,12 @@ import '../shared/shooting_stars_background.dart';
 
 class StartPage extends StatelessWidget {
   final Player player;
+  final bool shouldSkipSetup;
 
   const StartPage({
     Key? key,
     required this.player,
+    required this.shouldSkipSetup,
   }) : super(key: key);
 
   @override
@@ -44,7 +45,7 @@ class StartPage extends StatelessWidget {
                   onPressed: () {
                     // if the player refreshed the browser, don't go through
                     // setup again, just get back to the game
-                    if (player.status == PlayerStatus.inLobby) {
+                    if (!shouldSkipSetup) {
                       Navigator.pushReplacementNamed(context, '/setup');
                     } else {
                       Navigator.pushReplacementNamed(context, '/play');
