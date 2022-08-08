@@ -66,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
   List<QueryDocumentSnapshot> currentCards = [];
   final symbolCount = 75;
+  final cardCountPerPlayer = 3; // TODO: use this
 
   Map<int,int> currentScores = {};
 
@@ -373,10 +374,14 @@ Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> n
 }
 
 List<String> _getNumbersForCardId(int cardId, int symbolCount) {
+  assert(symbolCount >= 24);
   var cardGenerator = Random(cardId);
   List<String> numbers = [];
-  for (var i=0; i< 24; i++) {
-    numbers.add((1+cardGenerator.nextInt(symbolCount)).toString());
+  while (numbers.length < 24) {
+    var number = (1+cardGenerator.nextInt(symbolCount)).toString();
+    if (!numbers.contains(number)) {
+      numbers.add(number);
+    }
   }
   return numbers;
 }
