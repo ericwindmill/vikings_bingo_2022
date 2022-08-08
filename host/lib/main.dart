@@ -161,7 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               child: const Text("Draw"),
               onPressed: () {
-                _generateNextNumber(gameId, symbolCount);
+                _generateNextNumber(gameId, currentNumbers, symbolCount);
               }, 
             ),
             const Text("Scores"),
@@ -325,9 +325,11 @@ Stream<QuerySnapshot> _getCardsStream(String gameId) {
     .snapshots();
 }
 
-Future<void> _generateNextNumber(String gameId, int symbolCount) {
-  var number = (1+random.nextInt(symbolCount)).toString();
-  // TODO: check that this number hasn't been drawn yet, otherwise this is a noop - which looks weird
+Future<void> _generateNextNumber(String gameId, List<String> numbers, int symbolCount) {
+  var number = "willnevershowup";
+  do {
+    number = (1+random.nextInt(symbolCount)).toString();
+  } while (numbers.contains(number));
   return FirebaseFirestore.instance
       .collection('Games')
       .doc(gameId)
