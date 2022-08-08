@@ -329,7 +329,7 @@ Future<void> _generateNextNumber(String gameId, List<String> numbers, int symbol
   var number = "willnevershowup";
   do {
     number = (1+random.nextInt(symbolCount)).toString();
-  } while (numbers.contains(number));
+  } while (numbers.contains(number) && numbers.length < symbolCount);
   return FirebaseFirestore.instance
       .collection('Games')
       .doc(gameId)
