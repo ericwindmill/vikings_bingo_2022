@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:charts_flutter/flutter.dart' as chart;
 import 'package:charts_painter/chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -62,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> currentNumbers = [];
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
   List<QueryDocumentSnapshot> currentCards = [];
+  final symbolCount = 75;
 
   Map<int,int> currentScores = {};
 
@@ -87,10 +91,10 @@ class _MyHomePageState extends State<MyHomePage> {
           var playerId = doc.id;
           var data = doc.data()! as Map;
           if (data['status'] == 'waiting for cards') {
-            _generateCardsForPlayer(gameId, playerId);
+            _generateCardsForPlayer(gameId, playerId, symbolCount);
           }
           if (data['status'] == 'claiming bingo') {
-            _claimBingoForPlayer(gameId, playerId, currentNumbers);
+            _claimBingoForPlayer(gameId, playerId, currentNumbers, symbolCount);
           }
         }
       });
@@ -102,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Map<int,int> result = {};
           for (var card in cardsSnapshot.docs) {
             var cardId = int.parse(card.id);
-            var score = _getScoreForCard(numbers, cardId);
+            var score = _getScoreForCard(numbers, cardId, symbolCount);
             result[cardId] = score;
           }
           print('Card scores: $result');
@@ -157,16 +161,15 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               child: const Text("Draw"),
               onPressed: () {
-                _generateNextNumber(gameId);
+                _generateNextNumber(gameId, symbolCount);
               }, 
             ),
             const Text("Scores"),
             //Text(currentScores.toString()),
             AnimatedChart(
+              height: 200,
               state: ChartState.bar(
                 ChartData.fromList(
-                  //<double>[1, 3, 4, 2, 7, 6, 2, 5, 4].map((e) => BarValue<void>(e)).toList(),
-                  //currentScores.values.map((score) => BarValue(1.0*score)).toList()
                   [1,2,3,4,5].map((score) => BarValue(1.0 * currentScores.values.where((e) => e == score).length)).toList(),
                   axisMax: 1.0*currentScores.length
                 ),
@@ -179,7 +182,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) => FullScreenDialog(gameId: gameId),
+                    builder: (BuildContext context) => ShowWinnersDialog(gameId: gameId),
+                    fullscreenDialog: true,
+                  ),
+                );
+              },
+            ),
+            ElevatedButton(
+              child: const Text("Test time to winner"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => TestGameTimeDialog(),
                     fullscreenDialog: true,
                   ),
                 );
@@ -192,10 +207,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class FullScreenDialog extends StatelessWidget {
+class ShowWinnersDialog extends StatelessWidget {
   String gameId;
 
-  FullScreenDialog({Key? key, required this.gameId}) : super(key: key);
+  ShowWinnersDialog({Key? key, required this.gameId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -310,8 +325,8 @@ Stream<QuerySnapshot> _getCardsStream(String gameId) {
     .snapshots();
 }
 
-Future<void> _generateNextNumber(String gameId) {
-  var number = random.nextInt(75).toString();
+Future<void> _generateNextNumber(String gameId, int symbolCount) {
+  var number = (1+random.nextInt(symbolCount)).toString();
   // TODO: check that this number hasn't been drawn yet, otherwise this is a noop - which looks weird
   return FirebaseFirestore.instance
       .collection('Games')
@@ -321,12 +336,12 @@ Future<void> _generateNextNumber(String gameId) {
 
 Random random = Random(); // main randomizer
 
-Future<void> _generateCardsForPlayer(String gameId, String playerId) {
+Future<void> _generateCardsForPlayer(String gameId, String playerId, symbolCount) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
   var cardId = random.nextInt(1<<32);
-  var card = _getNumbersForCardId(cardId);
+  var card = _getNumbersForCardId(cardId, symbolCount);
   batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), { 
     'createdAt': Timestamp.now(),
     'numbers': card,
@@ -336,14 +351,14 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId) {
   return batch.commit();
 }
 
-Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> numbers) async {
+Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> numbers, int symbolCount) async {
   var hasBingo = false;
   // get cards for player
   var snapshot = await FirebaseFirestore.instance.collection('Games/$gameId/Players/$playerId/Cards/').get();
   var cardIds = snapshot.docs.map((doc) => int.parse(doc.id));
   for (var cardId in cardIds) {
     // if this card has a score of 5, the claim is correct
-    if (_getScoreForCard(numbers, cardId) >= 5) {
+    if (_getScoreForCard(numbers, cardId, symbolCount) >= 5) {
       hasBingo = true;
     }
   }
@@ -355,19 +370,19 @@ Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> n
   return hasBingo;
 }
 
-List<String> _getNumbersForCardId(int cardId) {
+List<String> _getNumbersForCardId(int cardId, int symbolCount) {
   var cardGenerator = Random(cardId);
   List<String> numbers = [];
   for (var i=0; i< 24; i++) {
-    numbers.add(cardGenerator.nextInt(75).toString());
+    numbers.add((1+cardGenerator.nextInt(symbolCount)).toString());
   }
   return numbers;
 }
 
-
-int _getScoreForCard(List<String> numbers, int cardId) {
+/*
+int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
   const lines = [[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14],[15,16,17,18,19],[20,21,22,23,24], [1,6,11,15,20],[2,7,12,16,21],[3,8,17,22],[4,9,13,18,23],[5,10,14,19,24], [1,6,18,23], [5,9,16,20]];
-  var card = _getNumbersForCardId(cardId);
+  var card = _getNumbersForCardId(cardId, symbolCount);
 
   var maxLength = 0;
   for (var line in lines) {
@@ -383,12 +398,168 @@ int _getScoreForCard(List<String> numbers, int cardId) {
   }
   return maxLength;
 }
+*/
 
-MapEntry<String,String> _getPlayerForCard(List<QueryDocumentSnapshot> cards, List<QueryDocumentSnapshot> players, int cardId) {
-  var cardDoc = cards.firstWhere((doc) => doc.id == cardId.toString());
-  var uid = cardDoc.reference.parent.parent!.id;
-  var playerDoc = players.firstWhere((doc) => doc.id == uid);
-  var data = playerDoc.data() as Map;
+int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
+  return _getScoreForCardNumbers(numbers, _getNumbersForCardId(cardId, symbolCount));
+}
 
-  return MapEntry(uid, data["name"]);
+int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers) {
+  const lines = [[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14],[15,16,17,18,19],[20,21,22,23,24], [1,6,11,15,20],[2,7,12,16,21],[3,8,17,22],[4,9,13,18,23],[5,10,14,19,24], [1,6,18,23], [5,9,16,20]];
+
+  var maxLength = 0;
+  for (var line in lines) {
+    var length = lines.length == 4 ? 1 : 0;
+    for (var index in line) {
+      if (numbers.contains(cardNumbers[index-1])) {
+        length++;
+      }
+    }
+    if (length > maxLength) {
+      maxLength = length;
+    }
+  }
+  return maxLength;
+}
+
+int _calculateWinnerTime(int playerCount, int cardsPerPlayerCount, int symbolCount) {
+  var cards = {};
+  for (var playerIndex=0; playerIndex < playerCount; playerIndex++) {
+    for (var playerCardIndex=0; playerCardIndex < cardsPerPlayerCount; playerCardIndex++) {
+      var cardId = random.nextInt(1<<32);
+      var card = _getNumbersForCardId(cardId, symbolCount);
+      cards[cardId] = card;
+    }
+  }
+  var drawCount = 0, bestScore = 0, numbers = <String>[];
+  do {
+    var number = (1+random.nextInt(symbolCount)).toString();
+    numbers.add(number);
+    var scores = cards.keys.map((cardId) => _getScoreForCardNumbers(numbers, cards[cardId]));
+    bestScore = scores.reduce(max);
+    drawCount++;
+  } 
+  while (bestScore < 5 && drawCount < 100);
+  print('Found a winner after $drawCount draws');
+  return drawCount;
+}
+
+class TestGameTimeDialog extends StatefulWidget {
+  TestGameTimeDialog({Key? key}): super(key: key);
+  
+  @override
+  State<TestGameTimeDialog> createState() => _TestGameTimeState();
+}
+
+class _TestGameTimeState extends State<TestGameTimeDialog> {
+  var drawCounts = <int, int>{};
+  var drawCountKeys = <int>[];
+  var playerCount = 100;
+  var cardsPerPlayerCount = 3;
+  var symbolCount = 75;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _runSimulations() {
+    for (var i=0; i<10; i++) {
+      var count = _calculateWinnerTime(playerCount, cardsPerPlayerCount, symbolCount);
+      if (drawCounts.containsKey(count)) {
+        drawCounts[count]= drawCounts[count]! + 1;
+      }
+      else {
+        drawCounts[count] = 1;
+        drawCountKeys.add(count);
+        drawCountKeys.sort();
+      }
+    }
+    return setState(() { });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Drawn count until winner'),
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            ElevatedButton(
+              child: const Text("Run 10 simulations"),
+              onPressed: () { _runSimulations(); }
+            ),
+            const Text("Player count"),
+            Slider(
+              value: 1.0*playerCount,
+              min: 50,
+              max: 500,
+              divisions: 9,
+              label: playerCount.toString(),
+              onChanged: (double value) {
+                setState(() {
+                  playerCount = value.round();
+                });
+              },
+            ),
+            const Text("Cards per player"),
+            Slider(
+              value: 1.0*cardsPerPlayerCount,
+              min: 1,
+              max: 5,
+              divisions: 4,
+              label: cardsPerPlayerCount.toString(),
+              onChanged: (double value) {
+                setState(() {
+                  cardsPerPlayerCount = value.round();
+                });
+              },
+            ),
+            const Text("Symbol count"),
+            Slider(
+              value: 1.0*symbolCount,
+              min: 25,
+              max: 75,
+              divisions: 2,
+              label: symbolCount.toString(),
+              onChanged: (double value) {
+                setState(() {
+                  symbolCount = value.round();
+                });
+              },
+            ),
+            drawCounts.isEmpty 
+            ? const Text('No data to show yet')
+            : SizedBox(
+              height: 350, 
+              child: chart.BarChart(
+                [chart.Series<int,String>(
+                  id: 'draw counts',
+                  data: drawCountKeys,
+                  domainFn: (k, v) => k.toString(),
+                  measureFn: (k, v) => drawCounts[k],
+                )],
+                animate: true,
+              ),
+            ),
+            ElevatedButton(
+              child: const Text("Clear"),
+              onPressed: () { 
+                drawCounts.clear(); 
+                drawCountKeys.clear();
+                setState((){}); 
+              }
+            ),
+          ]
+        )
+      )
+    );
+  }  
 }
