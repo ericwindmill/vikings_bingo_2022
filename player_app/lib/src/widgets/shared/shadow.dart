@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/provider.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
-
-import '../../style/palette.dart';
 
 class Blur {
   final double sigmaX;
@@ -32,7 +29,6 @@ class GradientDropShadow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.watch<Palette>();
     return Stack(
       children: <Widget>[
         Opacity(

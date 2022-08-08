@@ -5,12 +5,23 @@ import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 
 class FirestoreService {
-  static void joinGame({required String gameId, required Player player}) async {
+  static Future<void> joinLobby(
+      {required String gameId, required Player player}) async {
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
         .doc(player.uid)
         .set({
-      'status': player.status.value,
+      'status': PlayerStatus.inLobby.value,
+      'name': player.name,
+    });
+  }
+
+  static void joinGame({required String gameId, required Player player}) async {
+    await FirebaseFirestore.instance
+        .collection('Games/$gameId/Players')
+        .doc(player.uid)
+        .update({
+      'status': PlayerStatus.waitingForCards.value,
       'name': player.name,
     });
   }
@@ -89,7 +100,17 @@ class FirestoreService {
         .snapshots()
         .map((docSnapshot) {
       final data = docSnapshot.data() as Map<String, dynamic>;
-      return Player.fromJson(data);
+      return Player.fromJson(data, uid: uid);
     });
+  }
+
+  static Future<bool> playerHasCards(
+    String gameId,
+  ) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final cardsCollection = await FirebaseFirestore.instance
+        .collection('Games/$gameId/Players/$uid/Cards')
+        .get();
+    return cardsCollection.docs.isNotEmpty;
   }
 }

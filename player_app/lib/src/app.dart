@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
-import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
@@ -19,36 +19,21 @@ class BingoPlayerApp extends StatefulWidget {
 
 class _BingoPlayerAppState extends State<BingoPlayerApp> {
   final Stream<String> gameIdStream = FirestoreService.gameIdStream();
-  Stream<Player> playerStream = FirestoreService.getPlayerStream('none');
   String gameId = 'none';
-  late Player player;
-
-  _BingoPlayerAppState() {
-    player = widget.player;
-  }
+  bool playerHasCards = false;
 
   @override
   void initState() {
     super.initState();
     gameIdStream.listen((gId) async {
-      if (gId != gameId) {
-        // On new game: update GameId And Player's status to inLobby
-        FirestoreService.updatePlayerStatus(
-            PlayerStatus.inLobby, player, gameId);
-        setState(() {
-          gameId = gId;
-        });
-      }
-
-      playerStream = FirestoreService.getPlayerStream(gId);
-      playerStream.listen((Player p) {
-        setState(() {
-          player = p;
-        });
+      // On new game: update GameId And add player to "lobby".
+      await FirestoreService.joinLobby(gameId: gId, player: widget.player);
+      final hasCards = await FirestoreService.playerHasCards(gameId);
+      setState(() {
+        gameId = gId;
+        playerHasCards = hasCards;
       });
     });
-
-    FirestoreService.getPlayerStream(gameId).listen((Player player) {});
   }
 
   @override
@@ -56,15 +41,21 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
     return MaterialApp(
       scrollBehavior: AppScrollBehavior(),
       onGenerateRoute: (RouteSettings routeSettings) {
+        print(playerHasCards);
         if (routeSettings.name == '/') {
           return MaterialPageRoute(
-              builder: (context) => StartPage(player: widget.player));
+            builder: (context) => StartPage(
+              player: widget.player,
+              shouldSkipSetup: playerHasCards,
+            ),
+          );
         }
 
         if (routeSettings.name == '/setup') {
           return MaterialPageRoute(
             builder: (context) => SetupPage(
               player: widget.player,
+              gameIdStream: gameIdStream,
             ),
           );
         }
