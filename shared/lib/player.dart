@@ -3,13 +3,13 @@ import 'player_status.dart';
 class Player {
   final String uid;
   final String name;
-  PlayerStatus status;
+  PlayerStatus? status;
   String? hostMessage;
 
   Player({
     required this.uid,
     required this.name,
-    this.status = PlayerStatus.inLobby,
+    this.status,
     this.hostMessage,
   });
 
@@ -26,11 +26,13 @@ class Player {
     return <String, dynamic>{
       'name': name,
       'uid': uid,
-      'status': status.value,
+      if (status != null) 'status': status!.value,
     };
   }
 
   bool get isInGame {
+    if (status == null) return false;
+
     return status == PlayerStatus.waitingForCards ||
         status == PlayerStatus.cardsDealt ||
         status == PlayerStatus.playing ||

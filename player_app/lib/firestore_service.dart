@@ -26,17 +26,17 @@ class FirestoreService {
     });
   }
 
-  static void updatePlayerStatus(
+  static Future<void> updatePlayerStatus(
     PlayerStatus newStatus,
     Player player,
     String gameId,
-  ) {
+  ) async {
     player.status = newStatus;
-    FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
         .doc(player.uid)
         .update({
-      'status': player.status.value,
+      'status': player.status!.value,
       if (player.status == PlayerStatus.claimingBingo)
         'bingoClaimTime': FieldValue.serverTimestamp(),
     });

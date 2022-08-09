@@ -6,6 +6,7 @@ import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/game/bingo_table_header_row.dart';
+import 'package:vikings_bingo/src/widgets/shared/confetti_animation.dart';
 
 import '../../style/spacing.dart';
 import '../game/bingo_board_table.dart';
@@ -27,6 +28,8 @@ class _GamePageState extends State<GamePage> {
     super.initState();
     _listenForPlayerStatusUpdates();
   }
+
+  bool hasWonBingo = false;
 
   void _listenForPlayerStatusUpdates() {
     FirestoreService.getPlayerStream(widget.gameId).listen(
@@ -90,8 +93,30 @@ class _GamePageState extends State<GamePage> {
           );
         }
         if (player.status == PlayerStatus.wonBingo) {
-          print('TODO: show winner animation');
-          print('TODO: show host message');
+          setState(() {
+            hasWonBingo = true;
+          });
+
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  scrollable: true,
+                  title: Text('You win!'),
+                  content: Center(
+                    child: Text(
+                        'Show this code to the host: ${player.hostMessage ?? '123XYZ'}'),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('Dismiss'),
+                    )
+                  ],
+                );
+              });
         }
       },
     );
@@ -103,6 +128,7 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       body: Stack(
         children: [
+          if (hasWonBingo) Confetti(),
           Align(
             alignment: AlignmentDirectional.topCenter,
             child: Padding(

@@ -8,11 +8,13 @@ import '../shared/shooting_stars_background.dart';
 class StartPage extends StatelessWidget {
   final Player player;
   final bool shouldSkipSetup;
+  final bool loading;
 
   const StartPage({
     Key? key,
     required this.player,
     required this.shouldSkipSetup,
+    required this.loading,
   }) : super(key: key);
 
   @override
@@ -42,15 +44,17 @@ class StartPage extends StatelessWidget {
                 ),
                 OutlinedButton(
                   style: outlineButtonStyle,
-                  onPressed: () {
-                    // if the player refreshed the browser, don't go through
-                    // setup again, just get back to the game
-                    if (!shouldSkipSetup) {
-                      Navigator.pushReplacementNamed(context, '/setup');
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/play');
-                    }
-                  },
+                  onPressed: loading
+                      ? null
+                      : () {
+                          // if the player refreshed the browser, don't go through
+                          // setup again, just get back to the game
+                          if (!shouldSkipSetup) {
+                            Navigator.pushReplacementNamed(context, '/setup');
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/play');
+                          }
+                        },
                   child: const Text('Start'),
                 ),
               ],

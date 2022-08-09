@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
+import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
@@ -21,6 +22,7 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
   final Stream<String> gameIdStream = FirestoreService.gameIdStream();
   String gameId = 'none';
   bool playerHasCards = false;
+  bool initialLoading = true;
 
   @override
   void initState() {
@@ -28,10 +30,17 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
     gameIdStream.listen((gId) async {
       // On new game: update GameId And add player to "lobby".
       await FirestoreService.joinLobby(gameId: gId, player: widget.player);
-      final hasCards = await FirestoreService.playerHasCards(gameId);
+      final hasCards = await FirestoreService.playerHasCards(gId);
+
+      if (hasCards) {
+        await FirestoreService.updatePlayerStatus(
+            PlayerStatus.playing, widget.player, gId);
+      }
+
       setState(() {
         gameId = gId;
         playerHasCards = hasCards;
+        initialLoading = false;
       });
     });
   }
@@ -41,12 +50,12 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
     return MaterialApp(
       scrollBehavior: AppScrollBehavior(),
       onGenerateRoute: (RouteSettings routeSettings) {
-        print(playerHasCards);
         if (routeSettings.name == '/') {
           return MaterialPageRoute(
             builder: (context) => StartPage(
               player: widget.player,
               shouldSkipSetup: playerHasCards,
+              loading: initialLoading,
             ),
           );
         }
