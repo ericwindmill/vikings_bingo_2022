@@ -1,15 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:charts_flutter/flutter.dart' as chart;
 import 'package:charts_painter/chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'dart:math';
 
 // ignore_for_file: avoid_print
 
@@ -68,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final symbolCount = 75;
   final cardCountPerPlayer = 3; // TODO: use this
 
-  Map<int,int> currentScores = {};
+  Map<int, int> currentScores = {};
 
   @override
   void initState() {
@@ -80,10 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
       });
       playersStream = _getGamePlayersStream(gameId);
       playersStream.listen((snapshot) => {
-        setState(() {
-          currentPlayers = snapshot.docs;
-        })
-      });
+            setState(() {
+              currentPlayers = snapshot.docs;
+            })
+          });
       numbersStream = _getNumbersStream(gameId);
       cardsStream = _getCardsStream(gameId);
       playersStream.listen((snapshot) {
@@ -104,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
           currentCards = cardsSnapshot.docs;
         });
         numbersStream.listen((numbers) {
-          Map<int,int> result = {};
+          Map<int, int> result = {};
           for (var card in cardsSnapshot.docs) {
             var cardId = int.parse(card.id);
             var score = _getScoreForCard(numbers, cardId, symbolCount);
@@ -136,16 +135,13 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.headline4,
             ),
             ElevatedButton(
-              child: const Text('Start new game'),
-              onPressed: () {
-                _startNewGame();
-              }
-            ),
+                child: const Text('Start new game'),
+                onPressed: () {
+                  _startNewGame();
+                }),
             const Text("Player count: "),
-            Text(
-              currentPlayers.length.toString(),
-              style: Theme.of(context).textTheme.headline4
-            ),
+            Text(currentPlayers.length.toString(),
+                style: Theme.of(context).textTheme.headline4),
             const Text("Card count"),
             Text(
               currentCards.length.toString(),
@@ -153,17 +149,23 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const Text("Latest number(s):"),
             Row(
-              children: currentNumbers.reversed.take(10).toList().asMap().entries.map((entry) {
-                return (entry.key==0) 
-                  ? Text(entry.value, style: Theme.of(context).textTheme.headline3)
-                  : Text(" ${entry.value}", style: TextStyle(fontSize: 25.0-2.0*entry.key));
-              }).toList()
-            ),
+                children: currentNumbers.reversed
+                    .take(10)
+                    .toList()
+                    .asMap()
+                    .entries
+                    .map((entry) {
+              return (entry.key == 0)
+                  ? Text(entry.value,
+                      style: Theme.of(context).textTheme.headline3)
+                  : Text(" ${entry.value}",
+                      style: TextStyle(fontSize: 25.0 - 2.0 * entry.key));
+            }).toList()),
             ElevatedButton(
               child: const Text("Draw"),
               onPressed: () {
                 _generateNextNumber(gameId, currentNumbers, symbolCount);
-              }, 
+              },
             ),
             const Text("Scores"),
             //Text(currentScores.toString()),
@@ -171,9 +173,13 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 200,
               state: ChartState.bar(
                 ChartData.fromList(
-                  [1,2,3,4,5].map((score) => BarValue(1.0 * currentScores.values.where((e) => e == score).length)).toList(),
-                  axisMax: 1.0*currentScores.length
-                ),
+                    [1, 2, 3, 4, 5]
+                        .map((score) => BarValue(1.0 *
+                            currentScores.values
+                                .where((e) => e == score)
+                                .length))
+                        .toList(),
+                    axisMax: 1.0 * currentScores.length),
               ),
               duration: const Duration(seconds: 1),
             ),
@@ -183,7 +189,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) => ShowWinnersDialog(gameId: gameId),
+                    builder: (BuildContext context) =>
+                        ShowWinnersDialog(gameId: gameId),
                     fullscreenDialog: true,
                   ),
                 );
@@ -220,40 +227,38 @@ class ShowWinnersDialog extends StatelessWidget {
         title: const Text('Winners'),
       ),
       body: Center(
-        child: StreamBuilder(
-          stream: _getWinners(gameId),
-          builder: (context, asyncSnapshot) {
-            if (asyncSnapshot.hasData) {
-              var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
-              print('Got ${winners.length} winners: $winners');
-              return ListView(
+          child: StreamBuilder(
+        stream: _getWinners(gameId),
+        builder: (context, asyncSnapshot) {
+          if (asyncSnapshot.hasData) {
+            var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
+            print('Got ${winners.length} winners: $winners');
+            return ListView(
                 children: winners.map((winner) {
-                  var data = winner.data()! as Map;
-                  var name = data["name"];
-                  var time = (data['bingoClaimTime'] as Timestamp).toDate();
-                  var msg = (data['hostMessage'] ?? '-');
-                  return ListTile(
-                    isThreeLine: true,
-                    title: Text(winner.id),
-                    subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.sports_martial_arts_rounded),
-                      onPressed: () {
-                        db.doc('Games/$gameId/Players/${winner.id}').update({
-                          'hostMessage': Random().nextInt(100000).toString()
-                        });
-                      },
-                    ),
-                  );
-                }).toList()
+              var data = winner.data()! as Map;
+              var name = data["name"];
+              var time = (data['bingoClaimTime'] as Timestamp).toDate();
+              var msg = (data['hostMessage'] ?? '-');
+              return ListTile(
+                isThreeLine: true,
+                title: Text(winner.id),
+                subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.sports_martial_arts_rounded),
+                  onPressed: () {
+                    db.doc('Games/$gameId/Players/${winner.id}').update(
+                        {'hostMessage': Random().nextInt(100000).toString()});
+                  },
+                ),
               );
-            }
-            if (asyncSnapshot.hasError) {
-              return Text('Error: ${asyncSnapshot.error}');
-            }
-            return const CircularProgressIndicator();
-          },)
-      ),
+            }).toList());
+          }
+          if (asyncSnapshot.hasError) {
+            return Text('Error: ${asyncSnapshot.error}');
+          }
+          return const CircularProgressIndicator();
+        },
+      )),
     );
   }
 }
@@ -261,13 +266,13 @@ class ShowWinnersDialog extends StatelessWidget {
 var db = FirebaseFirestore.instance;
 //void _getWinners(List<QueryDocumentSnapshot> players) {
 Stream<List<QueryDocumentSnapshot>> _getWinners(String gameId) {
-  return db.collection('Games/$gameId/Players')
-    .where('status', isEqualTo: 'wonBingo')
-    .orderBy('bingoClaimTime', descending: true)
-    .snapshots()
-    .map((event) => event.docs);
+  return db
+      .collection('Games/$gameId/Players')
+      .where('status', isEqualTo: 'wonBingo')
+      .orderBy('bingoClaimTime', descending: true)
+      .snapshots()
+      .map((event) => event.docs);
 }
-
 
 Future<void> _startNewGame() {
   var db = FirebaseFirestore.instance;
@@ -275,22 +280,24 @@ Future<void> _startNewGame() {
 
   var gameId = FirebaseFirestore.instance.collection("Games").doc().id;
 
-  batch.update(db.collection('Globals').doc('Bootstrap'), { 'currentGame': gameId });
-  batch.set(db.collection('Games').doc(gameId), { 'createdAt': Timestamp.now() });
+  batch.update(
+      db.collection('Globals').doc('Bootstrap'), {'currentGame': gameId});
+  batch.set(db.collection('Games').doc(gameId), {'createdAt': Timestamp.now()});
 
   return batch.commit();
 }
+
 Stream<String> _getCurrentGameStream() {
   return FirebaseFirestore.instance
       .doc('Globals/Bootstrap')
-      .snapshots().map((docSnapshot) {
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data() as Map<String, dynamic>;
-        return data['currentGame'];
-      }
-      else {
-        return '-none-';
-      }
+      .snapshots()
+      .map((docSnapshot) {
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      return data['currentGame'];
+    } else {
+      return '-none-';
+    }
   });
 }
 
@@ -301,63 +308,70 @@ Stream<QuerySnapshot> _getGamePlayersStream(String gameId) {
       .collection('Players')
       .snapshots();
 }
+
 Stream<List<String>> _getNumbersStream(String gameId) {
   return FirebaseFirestore.instance
       .collection('Games')
       .doc(gameId)
-      .snapshots().map((docSnapshot) {
-        // TODO: Unhandled Exception: type 'Null' is not a subtype of type 'Map<String, dynamic>' in type cast
-      if (docSnapshot.exists && docSnapshot.data() != null && docSnapshot.data()!.containsKey('numbers')) {
-        final data = docSnapshot.data() as Map<String, dynamic>;
-        return List<String>.from(data['numbers']);
-      }
-      else {
-        return  ['-none-'];
-      }
+      .snapshots()
+      .map((docSnapshot) {
+    // TODO: Unhandled Exception: type 'Null' is not a subtype of type 'Map<String, dynamic>' in type cast
+    if (docSnapshot.exists &&
+        docSnapshot.data() != null &&
+        docSnapshot.data()!.containsKey('numbers')) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      return List<String>.from(data['numbers']);
+    } else {
+      return ['-none-'];
+    }
   });
 }
+
 Stream<QuerySnapshot> _getCardsStream(String gameId) {
   var path = '/Games/$gameId';
   return FirebaseFirestore.instance
-    .collectionGroup("Cards")
-    .orderBy(FieldPath.documentId)
-    .startAt([path])
-    .endAt(['$path\uf8ff'])
-    .snapshots();
+      .collectionGroup("Cards")
+      .orderBy(FieldPath.documentId)
+      .startAt([path]).endAt(['$path\uf8ff']).snapshots();
 }
 
-Future<void> _generateNextNumber(String gameId, List<String> numbers, int symbolCount) {
+Future<void> _generateNextNumber(
+    String gameId, List<String> numbers, int symbolCount) {
   var number = "willnevershowup";
   do {
-    number = (1+random.nextInt(symbolCount)).toString();
+    number = (1 + random.nextInt(symbolCount)).toString();
   } while (numbers.contains(number) && numbers.length < symbolCount);
-  return FirebaseFirestore.instance
-      .collection('Games')
-      .doc(gameId)
-      .update({ 'numbers': FieldValue.arrayUnion([number]) });
+  return FirebaseFirestore.instance.collection('Games').doc(gameId).update({
+    'numbers': FieldValue.arrayUnion([number])
+  });
 }
 
 Random random = Random(); // main randomizer
 
-Future<void> _generateCardsForPlayer(String gameId, String playerId, symbolCount) {
+Future<void> _generateCardsForPlayer(
+    String gameId, String playerId, symbolCount) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
-  var cardId = random.nextInt(1<<32);
+  var cardId = random.nextInt(1 << 32);
   var card = _getNumbersForCardId(cardId, symbolCount);
-  batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), { 
+  batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), {
     'createdAt': Timestamp.now(),
     'numbers': card,
   });
-  batch.update(db.doc('Games/$gameId/Players/$playerId'), { 'status': 'cards dealt' });
+  batch.update(
+      db.doc('Games/$gameId/Players/$playerId'), {'status': 'cards dealt'});
 
   return batch.commit();
 }
 
-Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> numbers, int symbolCount) async {
+Future<bool> _claimBingoForPlayer(String gameId, String playerId,
+    List<String> numbers, int symbolCount) async {
   var hasBingo = false;
   // get cards for player
-  var snapshot = await FirebaseFirestore.instance.collection('Games/$gameId/Players/$playerId/Cards/').get();
+  var snapshot = await FirebaseFirestore.instance
+      .collection('Games/$gameId/Players/$playerId/Cards/')
+      .get();
   var cardIds = snapshot.docs.map((doc) => int.parse(doc.id));
   for (var cardId in cardIds) {
     // if this card has a score of 5, the claim is correct
@@ -367,8 +381,8 @@ Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> n
   }
 
   await FirebaseFirestore.instance
-    .doc('Games/$gameId/Players/$playerId')
-    .update({ 'status': hasBingo ? 'wonBingo' : 'false bingo' });
+      .doc('Games/$gameId/Players/$playerId')
+      .update({'status': hasBingo ? 'wonBingo' : 'false bingo'});
 
   return hasBingo;
 }
@@ -378,7 +392,7 @@ List<String> _getNumbersForCardId(int cardId, int symbolCount) {
   var cardGenerator = Random(cardId);
   List<String> numbers = [];
   while (numbers.length < 24) {
-    var number = (1+cardGenerator.nextInt(symbolCount)).toString();
+    var number = (1 + cardGenerator.nextInt(symbolCount)).toString();
     if (!numbers.contains(number)) {
       numbers.add(number);
     }
@@ -408,17 +422,31 @@ int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
 */
 
 int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
-  return _getScoreForCardNumbers(numbers, _getNumbersForCardId(cardId, symbolCount));
+  return _getScoreForCardNumbers(
+      numbers, _getNumbersForCardId(cardId, symbolCount));
 }
 
 int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers) {
-  const lines = [[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14],[15,16,17,18,19],[20,21,22,23,24], [1,6,11,15,20],[2,7,12,16,21],[3,8,17,22],[4,9,13,18,23],[5,10,14,19,24], [1,6,18,23], [5,9,16,20]];
+  const lines = [
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14],
+    [15, 16, 17, 18, 19],
+    [20, 21, 22, 23, 24],
+    [1, 6, 11, 15, 20],
+    [2, 7, 12, 16, 21],
+    [3, 8, 17, 22],
+    [4, 9, 13, 18, 23],
+    [5, 10, 14, 19, 24],
+    [1, 6, 18, 23],
+    [5, 9, 16, 20]
+  ];
 
   var maxLength = 0;
   for (var line in lines) {
     var length = lines.length == 4 ? 1 : 0;
     for (var index in line) {
-      if (numbers.contains(cardNumbers[index-1])) {
+      if (numbers.contains(cardNumbers[index - 1])) {
         length++;
       }
     }
@@ -429,31 +457,34 @@ int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers) {
   return maxLength;
 }
 
-int _calculateWinnerTime(int playerCount, int cardsPerPlayerCount, int symbolCount) {
+int _calculateWinnerTime(
+    int playerCount, int cardsPerPlayerCount, int symbolCount) {
   var cards = {};
-  for (var playerIndex=0; playerIndex < playerCount; playerIndex++) {
-    for (var playerCardIndex=0; playerCardIndex < cardsPerPlayerCount; playerCardIndex++) {
-      var cardId = random.nextInt(1<<32);
+  for (var playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    for (var playerCardIndex = 0;
+        playerCardIndex < cardsPerPlayerCount;
+        playerCardIndex++) {
+      var cardId = random.nextInt(1 << 32);
       var card = _getNumbersForCardId(cardId, symbolCount);
       cards[cardId] = card;
     }
   }
   var drawCount = 0, bestScore = 0, numbers = <String>[];
   do {
-    var number = (1+random.nextInt(symbolCount)).toString();
+    var number = (1 + random.nextInt(symbolCount)).toString();
     numbers.add(number);
-    var scores = cards.keys.map((cardId) => _getScoreForCardNumbers(numbers, cards[cardId]));
+    var scores = cards.keys
+        .map((cardId) => _getScoreForCardNumbers(numbers, cards[cardId]));
     bestScore = scores.reduce(max);
     drawCount++;
-  } 
-  while (bestScore < 5 && drawCount < 100);
+  } while (bestScore < 5 && drawCount < 100);
   print('Found a winner after $drawCount draws');
   return drawCount;
 }
 
 class TestGameTimeDialog extends StatefulWidget {
-  TestGameTimeDialog({Key? key}): super(key: key);
-  
+  TestGameTimeDialog({Key? key}) : super(key: key);
+
   @override
   State<TestGameTimeDialog> createState() => _TestGameTimeState();
 }
@@ -471,18 +502,18 @@ class _TestGameTimeState extends State<TestGameTimeDialog> {
   }
 
   void _runSimulations() {
-    for (var i=0; i<10; i++) {
-      var count = _calculateWinnerTime(playerCount, cardsPerPlayerCount, symbolCount);
+    for (var i = 0; i < 10; i++) {
+      var count =
+          _calculateWinnerTime(playerCount, cardsPerPlayerCount, symbolCount);
       if (drawCounts.containsKey(count)) {
-        drawCounts[count]= drawCounts[count]! + 1;
-      }
-      else {
+        drawCounts[count] = drawCounts[count]! + 1;
+      } else {
         drawCounts[count] = 1;
         drawCountKeys.add(count);
         drawCountKeys.sort();
       }
     }
-    return setState(() { });
+    return setState(() {});
   }
 
   @override
@@ -493,80 +524,78 @@ class _TestGameTimeState extends State<TestGameTimeDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Drawn count until winner'),
-      ),
-      body: Center(
-        child: Column(
-          children: [
-            ElevatedButton(
+        appBar: AppBar(
+          title: const Text('Drawn count until winner'),
+        ),
+        body: Center(
+            child: Column(children: [
+          ElevatedButton(
               child: const Text("Run 10 simulations"),
-              onPressed: () { _runSimulations(); }
-            ),
-            const Text("Player count"),
-            Slider(
-              value: 1.0*playerCount,
-              min: 50,
-              max: 500,
-              divisions: 9,
-              label: playerCount.toString(),
-              onChanged: (double value) {
-                setState(() {
-                  playerCount = value.round();
-                });
-              },
-            ),
-            const Text("Cards per player"),
-            Slider(
-              value: 1.0*cardsPerPlayerCount,
-              min: 1,
-              max: 5,
-              divisions: 4,
-              label: cardsPerPlayerCount.toString(),
-              onChanged: (double value) {
-                setState(() {
-                  cardsPerPlayerCount = value.round();
-                });
-              },
-            ),
-            const Text("Symbol count"),
-            Slider(
-              value: 1.0*symbolCount,
-              min: 25,
-              max: 75,
-              divisions: 2,
-              label: symbolCount.toString(),
-              onChanged: (double value) {
-                setState(() {
-                  symbolCount = value.round();
-                });
-              },
-            ),
-            drawCounts.isEmpty 
-            ? const Text('No data to show yet')
-            : SizedBox(
-              height: 350, 
-              child: chart.BarChart(
-                [chart.Series<int,String>(
-                  id: 'draw counts',
-                  data: drawCountKeys,
-                  domainFn: (k, v) => k.toString(),
-                  measureFn: (k, v) => drawCounts[k],
-                )],
-                animate: true,
-              ),
-            ),
-            ElevatedButton(
+              onPressed: () {
+                _runSimulations();
+              }),
+          const Text("Player count"),
+          Slider(
+            value: 1.0 * playerCount,
+            min: 50,
+            max: 500,
+            divisions: 9,
+            label: playerCount.toString(),
+            onChanged: (double value) {
+              setState(() {
+                playerCount = value.round();
+              });
+            },
+          ),
+          const Text("Cards per player"),
+          Slider(
+            value: 1.0 * cardsPerPlayerCount,
+            min: 1,
+            max: 5,
+            divisions: 4,
+            label: cardsPerPlayerCount.toString(),
+            onChanged: (double value) {
+              setState(() {
+                cardsPerPlayerCount = value.round();
+              });
+            },
+          ),
+          const Text("Symbol count"),
+          Slider(
+            value: 1.0 * symbolCount,
+            min: 25,
+            max: 75,
+            divisions: 2,
+            label: symbolCount.toString(),
+            onChanged: (double value) {
+              setState(() {
+                symbolCount = value.round();
+              });
+            },
+          ),
+          drawCounts.isEmpty
+              ? const Text('No data to show yet')
+              : SizedBox(
+                  height: 350,
+                  child: chart.BarChart(
+                    [
+                      chart.Series<int, String>(
+                        id: 'draw counts',
+                        data: drawCountKeys,
+                        domainFn: (k, v) => k.toString(),
+                        measureFn: (k, v) => drawCounts[k],
+                      )
+                    ],
+                    animate: true,
+                  ),
+                ),
+          ElevatedButton(
               child: const Text("Clear"),
-              onPressed: () { 
-                drawCounts.clear(); 
+              onPressed: () {
+                drawCounts.clear();
                 drawCountKeys.clear();
-                setState((){}); 
-              }
-            ),
-          ]
-        )
-      )
-    );
-  }  
+                setState(() {});
+              }),
+        ])));
+  }
 }

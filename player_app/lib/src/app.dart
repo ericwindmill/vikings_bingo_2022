@@ -34,7 +34,10 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
 
       if (hasCards) {
         await FirestoreService.updatePlayerStatus(
-            PlayerStatus.playing, widget.player, gId);
+          PlayerStatus.playing,
+          widget.player,
+          gId,
+        );
       }
 
       setState(() {

@@ -29,6 +29,7 @@ dependencies:
   firebase_auth: ^3.4.1
   shared:
     path: ../shared
+  flutterfire_ui: ^0.4.3+5
 
 
 dev_dependencies:
