@@ -23,13 +23,16 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
+  bool hasWonBingo = false;
+
   @override
   void initState() {
     super.initState();
     _listenForPlayerStatusUpdates();
+    if (widget.player.status == PlayerStatus.wonBingo) {
+      hasWonBingo = true;
+    }
   }
-
-  bool hasWonBingo = false;
 
   void _listenForPlayerStatusUpdates() {
     FirestoreService.getPlayerStream(widget.gameId).listen(
@@ -138,6 +141,16 @@ class _GamePageState extends State<GamePage> {
               ),
             ),
           ),
+          if (hasWonBingo)
+            Align(
+              alignment: AlignmentDirectional.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+                child: Text(
+                  'Winner Code: ${widget.player.hostMessage ?? '123XYZ'}',
+                ),
+              ),
+            ),
           StreamBuilder<List<BingoCard>>(
             stream: FirestoreService.getCardsForPlayerStream(
               widget.gameId,

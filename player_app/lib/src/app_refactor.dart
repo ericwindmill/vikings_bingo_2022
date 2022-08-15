@@ -138,12 +138,12 @@ class _BingoAppState extends State<BingoApp> {
           builder:
               (BuildContext context, AsyncSnapshot<Player> playerSnapshot) {
             if (playerSnapshot.hasError) {
-              return Text('player snapshot has error');
+              return Scaffold(
+                  body: Center(child: Text('player snapshot has error')));
             }
 
             final shouldShowLobbyScreen =
-                playerSnapshot.connectionState == ConnectionState.waiting ||
-                    player!.status == PlayerStatus.inLobby;
+                player!.status == PlayerStatus.inLobby;
 
             if (shouldShowLobbyScreen) {
               return SetupPageRefactor(
