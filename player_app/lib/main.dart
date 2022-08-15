@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/player.dart';
-import 'package:vikings_bingo/src/app.dart';
+import 'package:vikings_bingo/src/app_refactor.dart';
 
 import 'firebase_options.dart';
 import 'src/util/game_util.dart';
@@ -29,7 +29,7 @@ void main() async {
   // final player = await bootstrapPlayer();
 
   runApp(
-    BingoPlayerApp(),
+    AppShell(),
   );
 }
 

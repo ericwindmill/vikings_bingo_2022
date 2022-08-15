@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
@@ -5,18 +6,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
+import 'package:vikings_bingo/src/util/game_util.dart';
 import 'package:vikings_bingo/src/widgets/start/start_page_refactor.dart';
 
+import 'widgets/game/game_page.dart';
+import 'widgets/setup/setup_page_refactor.dart';
+
 class AppShell extends StatelessWidget {
-  final Player player;
-  const AppShell({Key? key, required this.player}) : super(key: key);
+  const AppShell({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: BingoApp(
-        player: player,
-      ),
+      home: BingoApp(),
       theme: ThemeData(
         textTheme: GoogleFonts.pressStart2pTextTheme(
           const TextTheme(
@@ -49,8 +51,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 }
 
 class BingoApp extends StatefulWidget {
-  final Player player;
-  const BingoApp({Key? key, required this.player}) : super(key: key);
+  const BingoApp({Key? key}) : super(key: key);
 
   @override
   State<BingoApp> createState() => _BingoAppState();
@@ -59,12 +60,39 @@ class BingoApp extends StatefulWidget {
 class _BingoAppState extends State<BingoApp> {
   Stream<String> gameIdStream = FirestoreService.gameIdStream();
   bool initialLoading = true;
+  Player? player;
 
-  @override
-  void initState() {
-    super.initState();
-    gameIdStream.listen((newGId) async {
-      await FirestoreService.joinLobby(gameId: newGId, player: widget.player);
+  _initCurrentPlayer() async {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      // if signed out, return
+      if (user == null) return;
+
+      // if the player already exists, don't update it with a new name
+      if (player == null) {
+        if (user.displayName == null) {
+          final name = generateRandomPlayerName();
+          player = Player(
+            uid: user.uid,
+            name: name,
+            status: PlayerStatus.newPlayer,
+          );
+          user.updateDisplayName(name);
+        } else {
+          player = Player(
+            uid: user.uid,
+            name: user.displayName,
+            status: PlayerStatus.newPlayer,
+          );
+        }
+      }
+      _initGameIdStream();
+    });
+  }
+
+  _initGameIdStream() {
+    gameIdStream.listen((String? newGId) async {
+      if (newGId == null) return;
+      await FirestoreService.joinLobby(gameId: newGId, player: player!);
       setState(() {
         initialLoading = false;
       });
@@ -72,54 +100,76 @@ class _BingoAppState extends State<BingoApp> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initCurrentPlayer();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<String>(
-        stream: gameIdStream,
-        builder: (context, AsyncSnapshot<String> gameIdSnapshot) {
-          bool shouldShowStartPageWithDisabledButton =
-              gameIdSnapshot.connectionState == ConnectionState.waiting ||
-                  !gameIdSnapshot.hasData ||
-                  gameIdSnapshot.data == 'none' ||
-                  widget.player.status == PlayerStatus.newPlayer;
+      stream: gameIdStream,
+      builder: (context, AsyncSnapshot<String> gameIdSnapshot) {
+        bool shouldShowStartPageWithDisabledButton =
+            gameIdSnapshot.connectionState == ConnectionState.waiting ||
+                !gameIdSnapshot.hasData ||
+                gameIdSnapshot.data == 'none' ||
+                player == null ||
+                player!.status == PlayerStatus.newPlayer;
 
-          if (shouldShowStartPageWithDisabledButton) {
-            return StartPageRefactor(
-              onPressed: initialLoading
-                  ? null
-                  : () {
-                      FirestoreService.updatePlayerStatus(
-                        PlayerStatus.inLobby,
-                        widget.player,
-                        gameIdSnapshot.data!,
-                      );
-                    },
-            );
-          }
-
-          final newGameId = gameIdSnapshot.data!;
-          return StreamBuilder<Player>(
-            stream: FirestoreService.getPlayerStream(newGameId),
-            builder:
-                (BuildContext context, AsyncSnapshot<Player> playerSnapshot) {
-              if (playerSnapshot.hasError) {
-                return Text('player snapshot has error');
-              }
-
-              if (playerSnapshot.connectionState == ConnectionState.waiting) {
-                return Text('loading player');
-              }
-
-              final player = playerSnapshot.data!;
-              return Scaffold(
-                body: Column(
-                  children: [
-                    Text('Game ID: $newGameId'),
-                    Text('Player id: ${player.uid}'),
-                  ],
-                ),
-              );
-            },
+        if (shouldShowStartPageWithDisabledButton) {
+          return StartPageRefactor(
+            onPressed: initialLoading
+                ? null
+                : () async {
+                    await FirestoreService.updatePlayerStatus(
+                      PlayerStatus.inLobby,
+                      player!,
+                      gameIdSnapshot.data!,
+                    );
+                    setState(() {});
+                  },
           );
-        });
+        }
+
+        final newGameId = gameIdSnapshot.data!;
+        return StreamBuilder<Player>(
+          stream: FirestoreService.getPlayerStream(newGameId),
+          builder:
+              (BuildContext context, AsyncSnapshot<Player> playerSnapshot) {
+            if (playerSnapshot.hasError) {
+              return Text('player snapshot has error');
+            }
+
+            final shouldShowLobbyScreen =
+                playerSnapshot.connectionState == ConnectionState.waiting ||
+                    player!.status == PlayerStatus.inLobby;
+
+            if (shouldShowLobbyScreen) {
+              return SetupPageRefactor(
+                gameId: newGameId,
+                player: player!,
+                onPressedJoin: initialLoading
+                    ? null
+                    : () async {
+                        await FirestoreService.updatePlayerStatus(
+                          PlayerStatus.waitingForCards,
+                          player!,
+                          gameIdSnapshot.data!,
+                        );
+                        setState(() {});
+                      },
+              );
+            }
+
+            player = playerSnapshot.data!;
+            return GamePage(
+              player: player!,
+              gameId: newGameId,
+            );
+          },
+        );
+      },
+    );
   }
 }
