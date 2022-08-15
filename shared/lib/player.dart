@@ -2,7 +2,7 @@ import 'player_status.dart';
 
 class Player {
   final String uid;
-  final String name;
+  final String? name;
   PlayerStatus? status;
   String? hostMessage;
 

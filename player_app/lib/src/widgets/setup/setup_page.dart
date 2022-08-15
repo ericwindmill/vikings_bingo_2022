@@ -50,7 +50,7 @@ class SetupPage extends StatelessWidget {
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: spacingUnit * 4),
-                  child: Text(player.name,
+                  child: Text(player.name ?? 'No player',
                       style: Theme.of(context).textTheme.bodyMedium),
                 ),
                 const SizedBox(

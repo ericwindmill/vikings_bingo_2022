@@ -24,38 +24,24 @@ void main() async {
     }
   }
 
-  final player = await bootstrapPlayer();
+  FirebaseAuth.instance.signInAnonymously();
+
+  // final player = await bootstrapPlayer();
 
   runApp(
-    BingoPlayerApp(player: player),
+    BingoPlayerApp(),
   );
 }
 
 Future<Player> bootstrapPlayer() async {
-  final cred = await FirebaseAuth.instance.signInAnonymously();
-  Player player;
-  final firestoreUser = await FirebaseFirestore.instance
-      .collection('Users')
-      .doc(cred.user!.uid)
-      .get()
-      .then((value) {
-    return value.data();
+  FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+    if (user == null) return;
+
+    if (user.displayName == null) {
+      await user.updateDisplayName(generateRandomPlayerName());
+    }
   });
 
-// The player doesn't exist (i.e. they've never loaded this app),
-// create the player
-  if (firestoreUser == null) {
-    player = Player(
-      uid: cred.user!.uid,
-      name: generateRandomPlayerName(),
-    );
-    await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(cred.user!.uid)
-        .set(player.toJson());
-  } else {
-    player = Player.fromJson(firestoreUser);
-  }
-
-  return player;
+  final cred = await FirebaseAuth.instance.signInAnonymously();
+  return Player(uid: cred.user!.uid, name: cred.user!.displayName!);
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
@@ -7,12 +8,12 @@ import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
+import 'util/game_util.dart';
 import 'widgets/game/game_page.dart';
 import 'widgets/setup/setup_page.dart';
 
 class BingoPlayerApp extends StatefulWidget {
-  final Player player;
-  const BingoPlayerApp({Key? key, required this.player}) : super(key: key);
+  const BingoPlayerApp({Key? key}) : super(key: key);
 
   @override
   State<BingoPlayerApp> createState() => _BingoPlayerAppState();
@@ -23,19 +24,32 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
   String gameId = 'none';
   bool playerHasCards = false;
   bool initialLoading = true;
+  Player? player;
 
-  @override
-  void initState() {
-    super.initState();
+  _initCurrentPlayer() async {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      if (user == null) return;
+      if (user.displayName == null) {
+        final name = generateRandomPlayerName();
+        player = Player(uid: user.uid, name: name);
+        user.updateDisplayName(generateRandomPlayerName());
+      } else {
+        player = Player(uid: user.uid, name: user.displayName);
+      }
+      _initGameIdStream();
+    });
+  }
+
+  _initGameIdStream() {
     gameIdStream.listen((gId) async {
       // On new game: update GameId And add player to "lobby".
-      await FirestoreService.joinLobby(gameId: gId, player: widget.player);
+      await FirestoreService.joinLobby(gameId: gId, player: player!);
       final hasCards = await FirestoreService.playerHasCards(gId);
 
       if (hasCards) {
         await FirestoreService.updatePlayerStatus(
           PlayerStatus.playing,
-          widget.player,
+          player!,
           gId,
         );
       }
@@ -49,6 +63,12 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initCurrentPlayer();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       scrollBehavior: AppScrollBehavior(),
@@ -56,7 +76,6 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
         if (routeSettings.name == '/') {
           return MaterialPageRoute(
             builder: (context) => StartPage(
-              player: widget.player,
               shouldSkipSetup: playerHasCards,
               loading: initialLoading,
             ),
@@ -66,7 +85,7 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
         if (routeSettings.name == '/setup') {
           return MaterialPageRoute(
             builder: (context) => SetupPage(
-              player: widget.player,
+              player: player!,
               gameIdStream: gameIdStream,
             ),
           );
@@ -85,7 +104,7 @@ class _BingoPlayerAppState extends State<BingoPlayerApp> {
 
           return MaterialPageRoute(
             builder: (context) => GamePage(
-              player: widget.player,
+              player: player!,
               gameId: gameId,
             ),
           );
