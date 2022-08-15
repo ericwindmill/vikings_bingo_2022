@@ -101,25 +101,26 @@ class _GamePageState extends State<GamePage> {
           });
 
           showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  scrollable: true,
-                  title: Text('You win!'),
-                  content: Center(
-                    child: Text(
-                        'Show this code to the host: ${player.hostMessage ?? '123XYZ'}'),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text('Dismiss'),
-                    )
-                  ],
-                );
-              });
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                scrollable: true,
+                title: Text('You win!'),
+                content: Center(
+                  child: Text(
+                      'Show this code to the host: ${player.hostMessage ?? '123XYZ'}'),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Dismiss'),
+                  )
+                ],
+              );
+            },
+          );
         }
       },
     );
@@ -141,16 +142,16 @@ class _GamePageState extends State<GamePage> {
               ),
             ),
           ),
-          if (hasWonBingo)
-            Align(
-              alignment: AlignmentDirectional.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-                child: Text(
-                  'Winner Code: ${widget.player.hostMessage ?? '123XYZ'}',
-                ),
-              ),
-            ),
+          // if (hasWonBingo)
+          //   Align(
+          //     alignment: AlignmentDirectional.topCenter,
+          //     child: Padding(
+          //       padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+          //       child: Text(
+          //         'Winner Code: ${widget.player.hostMessage ?? '123XYZ'}',
+          //       ),
+          //     ),
+          //   ),
           StreamBuilder<List<BingoCard>>(
             stream: FirestoreService.getCardsForPlayerStream(
               widget.gameId,

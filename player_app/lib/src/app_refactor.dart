@@ -92,7 +92,9 @@ class _BingoAppState extends State<BingoApp> {
   _initGameIdStream() {
     gameIdStream.listen((String? newGId) async {
       if (newGId == null) return;
-      await FirestoreService.joinLobby(gameId: newGId, player: player!);
+      await FirestoreService.updatePlayerStatus(
+          PlayerStatus.newPlayer, player!, newGId);
+      // await FirestoreService.joinLobby(gameId: newGId, player: player!);
       setState(() {
         initialLoading = false;
       });
@@ -133,15 +135,8 @@ class _BingoAppState extends State<BingoApp> {
         }
 
         final newGameId = gameIdSnapshot.data!;
-        return StreamBuilder<Player>(
-          stream: FirestoreService.getPlayerStream(newGameId),
-          builder:
-              (BuildContext context, AsyncSnapshot<Player> playerSnapshot) {
-            if (playerSnapshot.hasError) {
-              return Scaffold(
-                  body: Center(child: Text('player snapshot has error')));
-            }
-
+        return Builder(
+          builder: (BuildContext context) {
             final shouldShowLobbyScreen =
                 player!.status == PlayerStatus.inLobby;
 
@@ -162,7 +157,6 @@ class _BingoAppState extends State<BingoApp> {
               );
             }
 
-            player = playerSnapshot.data!;
             return GamePage(
               player: player!,
               gameId: newGameId,
