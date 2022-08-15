@@ -1,4 +1,7 @@
 enum PlayerStatus {
+  // a player who has _never_ joined a game
+  newPlayer,
+  // a player who wants to join the current game, and the game exists
   inLobby,
   waitingForCards,
   cardsDealt,
@@ -9,6 +12,7 @@ enum PlayerStatus {
 }
 
 const statusFromString = <String, PlayerStatus>{
+  newPlayer: PlayerStatus.newPlayer,
   inLobby: PlayerStatus.inLobby,
   waitingForCards: PlayerStatus.waitingForCards,
   cardsDealt: PlayerStatus.cardsDealt,
@@ -18,6 +22,7 @@ const statusFromString = <String, PlayerStatus>{
   wonBingo: PlayerStatus.wonBingo,
 };
 
+const String newPlayer = 'newPlayer';
 const String inLobby = 'in lobby';
 const String playing = 'playing';
 const String waitingForCards = 'waiting for cards';
@@ -29,6 +34,8 @@ const String falseBingo = 'false bingo';
 extension ReadableStatus on PlayerStatus {
   String get value {
     switch (this) {
+      case PlayerStatus.newPlayer:
+        return newPlayer;
       case PlayerStatus.inLobby:
         return inLobby;
       case PlayerStatus.waitingForCards:

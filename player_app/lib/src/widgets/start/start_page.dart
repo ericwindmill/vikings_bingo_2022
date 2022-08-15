@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared/player.dart';
 import 'package:vikings_bingo/src/style/spacing.dart';
 
 import '../../style/button_style.dart';
 import '../shared/shooting_stars_background.dart';
 
 class StartPage extends StatelessWidget {
-  final Player player;
   final bool shouldSkipSetup;
   final bool loading;
 
   const StartPage({
     Key? key,
-    required this.player,
     required this.shouldSkipSetup,
     required this.loading,
   }) : super(key: key);

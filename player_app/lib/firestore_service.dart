@@ -11,7 +11,7 @@ class FirestoreService {
         .collection('Games/$gameId/Players')
         .doc(player.uid)
         .set({
-      'status': PlayerStatus.inLobby.value,
+      'status': PlayerStatus.newPlayer.value,
       'name': player.name,
     });
   }
@@ -27,10 +27,7 @@ class FirestoreService {
   }
 
   static Future<void> updatePlayerStatus(
-    PlayerStatus newStatus,
-    Player player,
-    String gameId,
-  ) async {
+      PlayerStatus newStatus, Player player, String gameId) async {
     player.status = newStatus;
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
@@ -50,13 +47,13 @@ class FirestoreService {
     return FirebaseFirestore.instance
         .doc('Globals/Bootstrap')
         .snapshots()
-        .map((docSnapshot) {
-      if (docSnapshot.exists) {
+        .map((DocumentSnapshot? docSnapshot) {
+      if (docSnapshot == null) return 'none';
+      if (docSnapshot.exists && docSnapshot.data() != null) {
         final data = docSnapshot.data() as Map<String, dynamic>;
         return data['currentGame'];
-      } else {
-        return 'none';
       }
+      return 'none';
     });
   }
 
@@ -98,7 +95,7 @@ class FirestoreService {
         .collection('Games/$gameId/Players')
         .doc(uid)
         .snapshots()
-        .map((docSnapshot) {
+        .map((DocumentSnapshot docSnapshot) {
       final data = docSnapshot.data() as Map<String, dynamic>;
       return Player.fromJson(data, uid: uid);
     });

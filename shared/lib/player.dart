@@ -2,7 +2,7 @@ import 'player_status.dart';
 
 class Player {
   final String uid;
-  final String name;
+  final String? name;
   PlayerStatus? status;
   String? hostMessage;
 
@@ -17,7 +17,7 @@ class Player {
     return Player(
       uid: json['uid'] ?? uid,
       name: json['name'],
-      status: statusFromString[json['status']] ?? PlayerStatus.inLobby,
+      status: statusFromString[json['status']] ?? PlayerStatus.newPlayer,
       hostMessage: json['hostMessage'],
     );
   }
@@ -28,15 +28,5 @@ class Player {
       'uid': uid,
       if (status != null) 'status': status!.value,
     };
-  }
-
-  bool get isInGame {
-    if (status == null) return false;
-
-    return status == PlayerStatus.waitingForCards ||
-        status == PlayerStatus.cardsDealt ||
-        status == PlayerStatus.playing ||
-        status == PlayerStatus.falseBingo ||
-        status == PlayerStatus.claimingBingo;
   }
 }
