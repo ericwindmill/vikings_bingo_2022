@@ -136,12 +136,35 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ElevatedButton(
                 child: const Text('Start new game'),
-                onPressed: () {
-                  _startNewGame();
-                }),
+                onPressed: () {  _startNewGame(); }),
             const Text("Player count: "),
-            Text(currentPlayers.length.toString(),
-                style: Theme.of(context).textTheme.headline4),
+            Text(
+              currentPlayers.length.toString(),
+              style: Theme.of(context).textTheme.headline4
+            ),
+            ElevatedButton(
+              child: const Text('Start new game'),
+              onPressed: () { _startNewGame(); }
+            ),
+            const Text("Player count: "),
+            Text(
+              currentPlayers.length.toString(),
+              style: Theme.of(context).textTheme.headline4
+            ),
+            // StreamBuilder<QuerySnapshot>(
+            //   stream: FirebaseFirestore.instance.collection('Games/$gameId/Players').snapshots(),
+            //   builder: (context, asyncSnapshot) {
+            //     if (asyncSnapshot.hasData) {
+            //       var querySnapshot = asyncSnapshot.data!;
+            //       return Text(querySnapshot.size.toString());
+            //     }
+            //     if (asyncSnapshot.hasError) {
+            //       return Text('Error: ${asyncSnapshot.error}');
+            //     }
+            //     return const CircularProgressIndicator();
+            //   }
+            // ),
+
             const Text("Card count"),
             Text(
               currentCards.length.toString(),
