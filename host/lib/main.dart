@@ -303,8 +303,7 @@ Future<void> _startNewGame() {
 
   var gameId = FirebaseFirestore.instance.collection("Games").doc().id;
 
-  batch.update(
-      db.collection('Globals').doc('Bootstrap'), {'currentGame': gameId});
+  batch.set(db.collection('Globals').doc('Bootstrap'), {'currentGame': gameId}, SetOptions(merge: true));
   batch.set(db.collection('Games').doc(gameId), {'createdAt': Timestamp.now()});
 
   return batch.commit();
