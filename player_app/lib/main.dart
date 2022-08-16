@@ -22,7 +22,7 @@ void main() async {
   //   }
   // }
 
-  FirebaseAuth.instance.signInAnonymously();
+  await FirebaseAuth.instance.signInAnonymously();
 
   // final player = await bootstrapPlayer();
 
