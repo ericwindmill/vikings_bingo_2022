@@ -65,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<QuerySnapshot> cardsStream = _getCardsStream("none");
   List<QueryDocumentSnapshot> currentCards = [];
   final symbolCount = 75;
-  final cardCountPerPlayer = 3; // TODO: use this
+  final cardCountPerPlayer = 3;
 
   Map<int, int> currentScores = {};
 
@@ -91,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
           var playerId = doc.id;
           var data = doc.data()! as Map;
           if (data['status'] == 'waiting for cards') {
-            _generateCardsForPlayer(gameId, playerId, symbolCount);
+            _generateCardsForPlayer(gameId, playerId, cardCountPerPlayer, symbolCount);
           }
           if (data['status'] == 'claiming bingo') {
             _claimBingoForPlayer(gameId, playerId, currentNumbers, symbolCount);
@@ -132,24 +132,16 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text("Current game: "),
             Text(
               gameId,
-              style: Theme.of(context).textTheme.headline4,
-            ),
-            ElevatedButton(
-                child: const Text('Start new game'),
-                onPressed: () {  _startNewGame(); }),
-            const Text("Player count: "),
-            Text(
-              currentPlayers.length.toString(),
-              style: Theme.of(context).textTheme.headline4
+              style: Theme.of(context).textTheme.headline6,
             ),
             ElevatedButton(
               child: const Text('Start new game'),
-              onPressed: () { _startNewGame(); }
+              onPressed: () {  _startNewGame(); }
             ),
             const Text("Player count: "),
             Text(
               currentPlayers.length.toString(),
-              style: Theme.of(context).textTheme.headline4
+              style: Theme.of(context).textTheme.headline6
             ),
             // StreamBuilder<QuerySnapshot>(
             //   stream: FirebaseFirestore.instance.collection('Games/$gameId/Players').snapshots(),
@@ -168,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text("Card count"),
             Text(
               currentCards.length.toString(),
-              style: Theme.of(context).textTheme.headline3,
+              style: Theme.of(context).textTheme.headline6,
             ),
             const Text("Latest number(s):"),
             Row(
@@ -371,18 +363,20 @@ Future<void> _generateNextNumber(
 Random random = Random(); // main randomizer
 
 Future<void> _generateCardsForPlayer(
-    String gameId, String playerId, symbolCount) {
+    String gameId, String playerId, cardCount, symbolCount) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
-  var cardId = random.nextInt(1 << 32);
-  var card = _getNumbersForCardId(cardId, symbolCount);
-  batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), {
-    'createdAt': Timestamp.now(),
-    'numbers': card,
-  });
-  batch.update(
-      db.doc('Games/$gameId/Players/$playerId'), {'status': 'cards dealt'});
+  for (var i=0; i < cardCount; i++) {
+    var cardId = random.nextInt(1 << 32);
+    var card = _getNumbersForCardId(cardId, symbolCount);
+    batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), {
+      'createdAt': Timestamp.now(),
+      'numbers': card,
+    });
+    batch.update(
+        db.doc('Games/$gameId/Players/$playerId'), {'status': 'cards dealt'});
+  }
 
   return batch.commit();
 }
