@@ -32,7 +32,7 @@ class FirestoreService {
     await FirebaseFirestore.instance
         .collection('Games/$gameId/Players')
         .doc(player.uid)
-        .update({
+        .set({
       'status': player.status!.value,
       if (player.status == PlayerStatus.claimingBingo)
         'bingoClaimTime': FieldValue.serverTimestamp(),
