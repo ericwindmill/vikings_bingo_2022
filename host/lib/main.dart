@@ -405,37 +405,25 @@ Future<bool> _claimBingoForPlayer(String gameId, String playerId,
 
 List<String> _getNumbersForCardId(int cardId, int symbolCount) {
   assert(symbolCount >= 24);
+  assert(symbolCount % 5 == 0);
+
   var cardGenerator = Random(cardId);
-  List<String> numbers = [];
-  while (numbers.length < 24) {
-    var number = (1 + cardGenerator.nextInt(symbolCount)).toString();
-    if (!numbers.contains(number)) {
-      numbers.add(number);
+  var symbolCountPerColumn = (symbolCount/5).round();
+  print('symbolCountPerColumn=$symbolCountPerColumn');
+  List<String> numbers = List.generate(25, (i) => "");
+  for (var col=0; col < 5; col++) {
+    for (var row=0; row < 5; row++) {
+      late String num;
+      do { 
+        num = (1 + col * symbolCountPerColumn + cardGenerator.nextInt(symbolCountPerColumn)).toString();
+        //print('col=$col row=$row num=$num');
+      } while (numbers.contains(num));
+      //print('col=$col row=$row numbers[${col + row*5}] = $num');
     }
   }
+  numbers.removeAt(13); // Remove free square
   return numbers;
 }
-
-/*
-int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
-  const lines = [[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14],[15,16,17,18,19],[20,21,22,23,24], [1,6,11,15,20],[2,7,12,16,21],[3,8,17,22],[4,9,13,18,23],[5,10,14,19,24], [1,6,18,23], [5,9,16,20]];
-  var card = _getNumbersForCardId(cardId, symbolCount);
-
-  var maxLength = 0;
-  for (var line in lines) {
-    var length = lines.length == 4 ? 1 : 0;
-    for (var index in line) {
-      if (numbers.contains(card[index-1])) {
-        length++;
-      }
-    }
-    if (length > maxLength) {
-      maxLength = length;
-    }
-  }
-  return maxLength;
-}
-*/
 
 int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
   return _getScoreForCardNumbers(
@@ -541,7 +529,7 @@ class _TestGameTimeState extends State<TestGameTimeDialog> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Drawn count until winner'),
+          title: const Text('Draw count until winner'),
         ),
         body: Center(
             child: Column(children: [
@@ -592,7 +580,7 @@ class _TestGameTimeState extends State<TestGameTimeDialog> {
           drawCounts.isEmpty
               ? const Text('No data to show yet')
               : SizedBox(
-                  height: 350,
+                  height: 300,
                   child: chart.BarChart(
                     [
                       chart.Series<int, String>(
