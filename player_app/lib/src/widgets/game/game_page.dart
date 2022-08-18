@@ -54,7 +54,7 @@ class _GamePageState extends State<GamePage> {
                   });
 
                   return AlertDialog(
-                    content: Image.asset('ec5.gif'),
+                    content: Image.asset('assets/images/ec5.gif'),
                     actions: [
                       ElevatedButton(
                         style: ButtonStyle(

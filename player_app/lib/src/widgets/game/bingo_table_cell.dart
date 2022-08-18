@@ -57,7 +57,7 @@ class _BingoTableCellState extends State<BingoTableCell> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isHighlighted
-                      ? widget.highlightedColor ?? palette.randomColor
+                      ? widget.highlightedColor ?? palette.secondary
                       : Colors.white,
                 ),
               ),
