@@ -107,8 +107,9 @@ class _GamePageState extends State<GamePage> {
                 scrollable: true,
                 title: Text('You win!'),
                 content: Center(
-                  child: Text(
-                      'Show this code to the host: ${player.hostMessage ?? '123XYZ'}'),
+                  child: Text(player.hostMessage != null
+                      ? 'Show this code to the host: ${player.hostMessage}'
+                      : ''),
                 ),
                 actions: [
                   TextButton(
@@ -133,25 +134,24 @@ class _GamePageState extends State<GamePage> {
       body: Stack(
         children: [
           if (hasWonBingo) Confetti(),
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-              child: Text(
-                'Player: ${widget.player.name}',
-              ),
-            ),
+          StreamBuilder<Player>(
+            stream: FirestoreService.getPlayerStream(widget.gameId),
+            builder: (context, snapshot) {
+              var text = (hasWonBingo && snapshot.data!.hostMessage != null)
+                  ? 'Winner code: ${snapshot.data!.hostMessage}'
+                  : 'Player: ${widget.player.name}';
+              return Align(
+                alignment: AlignmentDirectional.topCenter,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: spacingUnit * 8),
+                  child: Text(
+                    text,
+                  ),
+                ),
+              );
+            },
           ),
-          // if (hasWonBingo)
-          //   Align(
-          //     alignment: AlignmentDirectional.topCenter,
-          //     child: Padding(
-          //       padding: const EdgeInsets.symmetric(vertical: spacingUnit * 8),
-          //       child: Text(
-          //         'Winner Code: ${widget.player.hostMessage ?? '123XYZ'}',
-          //       ),
-          //     ),
-          //   ),
           StreamBuilder<List<BingoCard>>(
             stream: FirestoreService.getCardsForPlayerStream(
               widget.gameId,
