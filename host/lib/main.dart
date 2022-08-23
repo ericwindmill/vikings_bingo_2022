@@ -414,7 +414,7 @@ List<String> _getNumbersForCardId(int cardId, int symbolCount) {
       do { 
         num = (1 + col * symbolCountPerColumn + cardGenerator.nextInt(symbolCountPerColumn)).toString();
       } while (numbers.contains(num));
-      numbers[col*5 + row] = num;
+      numbers[row*5 + col] = num;
     }
   }
   numbers.removeAt(13); // Remove free square
