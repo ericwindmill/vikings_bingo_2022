@@ -441,7 +441,7 @@ int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers, [int
 
   var maxLength = 0;
   for (var line in lines) {
-    var length = lines.length == 4 ? 1 : 0;
+    var length = line.length == 4 ? 1 : 0;
     for (var index in line) {
       if (numbers.contains(cardNumbers[index - 1])) {
         length++;
