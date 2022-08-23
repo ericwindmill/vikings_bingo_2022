@@ -356,12 +356,16 @@ Future<void> _generateNextNumber(
 
 Random random = Random(); // main randomizer
 
-Future<void> _generateCardsForPlayer(
-    String gameId, String playerId, cardCount, symbolCount) {
+Future<void> _generateCardsForPlayer(String gameId, String playerId, cardCount, symbolCount) async {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
-  for (var i=0; i < cardCount; i++) {
+  var currentCards = await db.collection('Games/$gameId/Players/$playerId/Cards/').get();
+  var currentCardCount = currentCards.size;
+
+  print('Generating ${cardCount - currentCardCount} cards for player $playerId');
+
+  for (var i=currentCardCount; i < cardCount; i++) {
     var cardId = random.nextInt(1 << 32);
     var card = _getNumbersForCardId(cardId, symbolCount);
     batch.set(db.doc('Games/$gameId/Players/$playerId/Cards/$cardId'), {
@@ -375,8 +379,7 @@ Future<void> _generateCardsForPlayer(
   return batch.commit();
 }
 
-Future<bool> _claimBingoForPlayer(String gameId, String playerId,
-    List<String> numbers, int symbolCount) async {
+Future<bool> _claimBingoForPlayer(String gameId, String playerId, List<String> numbers, int symbolCount) async {
   var hasBingo = false;
   // get cards for player
   var snapshot = await FirebaseFirestore.instance
