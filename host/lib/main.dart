@@ -18,15 +18,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // if (!kReleaseMode) {
-  //   try {
-  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  //   } catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
-
   runApp(const MyApp());
 }
 
@@ -136,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ElevatedButton(
               child: const Text('Start new game'),
-              onPressed: () {  _startNewGame(); }
+              onPressed: () {  _startNewGame(cardCountPerPlayer, symbolCount); }
             ),
             const Text("Player count: "),
             Text(
@@ -183,7 +174,6 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             const Text("Scores"),
-            //Text(currentScores.toString()),
             AnimatedChart(
               height: 200,
               state: ChartState.bar(
@@ -289,14 +279,18 @@ Stream<List<QueryDocumentSnapshot>> _getWinners(String gameId) {
       .map((event) => event.docs);
 }
 
-Future<void> _startNewGame() {
+Future<void> _startNewGame(int cardCountPerPlayer, int dictionarySize) {
   var db = FirebaseFirestore.instance;
   final batch = db.batch();
 
   var gameId = FirebaseFirestore.instance.collection("Games").doc().id;
 
   batch.set(db.collection('Globals').doc('Bootstrap'), {'currentGame': gameId}, SetOptions(merge: true));
-  batch.set(db.collection('Games').doc(gameId), {'createdAt': Timestamp.now()});
+  batch.set(db.collection('Games').doc(gameId), {
+    'createdAt': Timestamp.now(),
+    'cardCountPerPlayer': cardCountPerPlayer,
+    'dictionarySize': dictionarySize,
+  });
 
   return batch.commit();
 }
@@ -416,9 +410,8 @@ List<String> _getNumbersForCardId(int cardId, int symbolCount) {
       late String num;
       do { 
         num = (1 + col * symbolCountPerColumn + cardGenerator.nextInt(symbolCountPerColumn)).toString();
-        //print('col=$col row=$row num=$num');
       } while (numbers.contains(num));
-      //print('col=$col row=$row numbers[${col + row*5}] = $num');
+      numbers[col*5 + row] = num;
     }
   }
   numbers.removeAt(13); // Remove free square
@@ -427,10 +420,10 @@ List<String> _getNumbersForCardId(int cardId, int symbolCount) {
 
 int _getScoreForCard(List<String> numbers, int cardId, symbolCount) {
   return _getScoreForCardNumbers(
-      numbers, _getNumbersForCardId(cardId, symbolCount));
+      numbers, _getNumbersForCardId(cardId, symbolCount), cardId);
 }
 
-int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers) {
+int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers, [int cardId = -1]) {
   const lines = [
     [1, 2, 3, 4, 5],
     [6, 7, 8, 9, 10],
