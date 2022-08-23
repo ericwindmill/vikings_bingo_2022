@@ -21,6 +21,7 @@ void main() async {
   );
 
   await FirebaseAuth.instance.signInAnonymously();
+  print(FirebaseAuth.instance.currentUser!.uid);
 
   runApp(const MyApp());
 }
@@ -376,9 +377,8 @@ Future<void> _generateCardsForPlayer(String gameId, String playerId, cardCount, 
       'createdAt': Timestamp.now(),
       'numbers': card,
     });
-    batch.update(
-        db.doc('Games/$gameId/Players/$playerId'), {'status': 'cards dealt'});
   }
+  batch.update(db.doc('Games/$gameId/Players/$playerId'), {'status': 'cards dealt'});
 
   return batch.commit();
 }
