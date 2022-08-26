@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:shared/bingo_card.dart';
 import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/widgets/game/bingo_table_header_row.dart';
+import 'package:vikings_bingo/src/widgets/game/claim_bingo_button.dart';
 import 'package:vikings_bingo/src/widgets/shared/confetti_animation.dart';
 
 import '../../style/spacing.dart';
@@ -24,6 +23,7 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   bool hasWonBingo = false;
+  bool isCalm = true;
 
   @override
   void initState() {
@@ -41,52 +41,37 @@ class _GamePageState extends State<GamePage> {
           await showDialog(
               context: context,
               builder: (context) {
-                int second = 3;
-                return StatefulBuilder(builder: (context, setState) {
-                  Timer.periodic(Duration(milliseconds: 1500), (Timer timer) {
-                    if (second > 0) {
-                      setState(() {
-                        second--;
-                      });
-                    } else {
-                      timer.cancel();
-                    }
-                  });
-
-                  return AlertDialog(
-                    content: Image.asset('assets/images/ec5.gif'),
-                    actions: [
-                      ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.resolveWith(
-                            (state) {
-                              if (state.contains(MaterialState.disabled)) {
-                                return palette.primaryLight;
-                              }
-                              return palette.buttonBackground;
-                            },
-                          ),
-                          foregroundColor:
-                              MaterialStateProperty.all(palette.buttonText),
-                          textStyle: MaterialStateProperty.all(
-                              Theme.of(context).textTheme.headlineSmall),
-                          padding: MaterialStateProperty.all(
-                            const EdgeInsets.symmetric(
-                              horizontal: spacingUnit * 10,
-                              vertical: spacingUnit * 2,
-                            ),
+                return AlertDialog(
+                  content: Image.asset('assets/images/ec5.gif'),
+                  actions: [
+                    ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith(
+                          (state) {
+                            if (state.contains(MaterialState.disabled)) {
+                              return palette.primaryLight;
+                            }
+                            return palette.buttonBackground;
+                          },
+                        ),
+                        foregroundColor:
+                            MaterialStateProperty.all(palette.buttonText),
+                        textStyle: MaterialStateProperty.all(
+                            Theme.of(context).textTheme.headlineSmall),
+                        padding: MaterialStateProperty.all(
+                          const EdgeInsets.symmetric(
+                            horizontal: spacingUnit * 10,
+                            vertical: spacingUnit * 2,
                           ),
                         ),
-                        onPressed: second == 0
-                            ? () {
-                                Navigator.of(context).pop();
-                              }
-                            : null,
-                        child: Text('Dismiss in $second seconds...'),
-                      )
-                    ],
-                  );
-                });
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('Dismiss'),
+                    )
+                  ],
+                );
               });
 
           FirestoreService.updatePlayerStatus(
@@ -186,45 +171,10 @@ class _GamePageState extends State<GamePage> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: spacingUnit * 10),
-                            child: ValueListenableBuilder<bool>(
-                              valueListenable: card.hasBingo,
-                              builder: (context, bool value, child) {
-                                return ElevatedButton(
-                                  onPressed: value
-                                      ? () {
-                                          FirestoreService.submitBingo(
-                                            widget.player,
-                                            widget.gameId,
-                                          );
-                                        }
-                                      : null,
-                                  style: ButtonStyle(
-                                    backgroundColor:
-                                        MaterialStateProperty.resolveWith(
-                                      (state) {
-                                        if (state
-                                            .contains(MaterialState.disabled)) {
-                                          return palette.primaryLight;
-                                        }
-                                        return palette.buttonBackground;
-                                      },
-                                    ),
-                                    foregroundColor: MaterialStateProperty.all(
-                                        palette.buttonText),
-                                    textStyle: MaterialStateProperty.all(
-                                        Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall),
-                                    padding: MaterialStateProperty.all(
-                                      const EdgeInsets.symmetric(
-                                        horizontal: spacingUnit * 10,
-                                        vertical: spacingUnit * 2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text('BINGO!'),
-                                );
-                              },
+                            child: ClaimBingoButton(
+                              gameId: widget.gameId,
+                              player: widget.player,
+                              card: card,
                             ),
                           ),
                         ),
