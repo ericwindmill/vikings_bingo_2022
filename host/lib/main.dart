@@ -200,8 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) =>
-                        ShowWinnersDialog(gameId: gameId),
+                    builder: (BuildContext context) => ShowWinnersDialog(gameId: gameId),
                     fullscreenDialog: true,
                   ),
                 );
@@ -226,10 +225,22 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class ShowWinnersDialog extends StatelessWidget {
-  String gameId;
+class ShowWinnersDialog extends StatefulWidget {
+  const ShowWinnersDialog({Key? key, required this.gameId}) : super(key: key);
 
-  ShowWinnersDialog({Key? key, required this.gameId}) : super(key: key);
+  final String gameId;
+
+  @override
+  State<ShowWinnersDialog> createState() => _ShowWinnersState();
+}
+
+class _ShowWinnersState extends State<ShowWinnersDialog> {
+  late String gameId;
+
+  @override void initState() {
+    super.initState();
+    gameId = widget.gameId;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,39 +248,53 @@ class ShowWinnersDialog extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Winners'),
       ),
-      body: Center(
-          child: StreamBuilder(
-        stream: _getWinners(gameId),
-        builder: (context, asyncSnapshot) {
-          if (asyncSnapshot.hasData) {
-            var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
-            print('Got ${winners.length} winners: $winners');
-            return ListView(
-                children: winners.map((winner) {
-              var data = winner.data()! as Map;
-              var name = data["name"];
-              var time = (data['bingoClaimTime'] as Timestamp).toDate();
-              var msg = (data['hostMessage'] ?? '-');
-              return ListTile(
-                isThreeLine: true,
-                title: Text(winner.id),
-                subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.sports_martial_arts_rounded),
-                  onPressed: () {
-                    db.doc('Games/$gameId/Players/${winner.id}').update(
-                        {'hostMessage': Random().nextInt(100000).toString()});
-                  },
-                ),
-              );
-            }).toList());
+      body: Column(children: [
+        FutureBuilder(
+          future: FirebaseFirestore.instance.collection('Games').orderBy('createdAt', descending: true).get(),
+          builder: (context, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
+            if (!asyncSnapshot.hasData) return const CircularProgressIndicator();
+            return DropdownButton<String>(
+              value: gameId,
+              items: asyncSnapshot.data!.docs.map((doc) => DropdownMenuItem(value: doc.id, child: Text((doc.get("createdAt") as Timestamp).toDate().toString()))).toList(),
+              onChanged: (String? newValue) {
+                setState(() { gameId = newValue!; });
+              },
+            );
           }
-          if (asyncSnapshot.hasError) {
-            return Text('Error: ${asyncSnapshot.error}');
-          }
-          return const CircularProgressIndicator();
-        },
-      )),
+        ),
+        Center(child: StreamBuilder(
+          stream: _getWinners(gameId),
+          builder: (context, asyncSnapshot) {
+            if (asyncSnapshot.hasData) {
+              var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
+              print('Got ${winners.length} winners: ${winners.map((d) => d.id)}');
+              return ListView(shrinkWrap: true, children: winners.map((winner) {
+                var data = winner.data()! as Map;
+                var name = data["name"];
+                var time = (data['bingoClaimTime'] as Timestamp).toDate();
+                var msg = (data['hostMessage'] ?? '-');
+                return ListTile(
+                  isThreeLine: true,
+                  title: Text(winner.id),
+                  subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.message_sharp),
+                    onPressed: () {
+                      db.doc('Games/$gameId/Players/${winner.id}').update(
+                        {'hostMessage': Random().nextInt(100000).toString()}
+                      );
+                    },
+                  ),
+                );
+              }).toList());
+            }
+            if (asyncSnapshot.hasError) {
+              return Text('Error: ${asyncSnapshot.error}');
+            }
+            return const CircularProgressIndicator();
+          },
+        ))
+      ]),
     );
   }
 }
