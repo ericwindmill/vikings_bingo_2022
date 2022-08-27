@@ -1,3 +1,6 @@
+// ignore_for_file: must_be_immutable
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:math';
 
@@ -10,8 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-
-// ignore_for_file: avoid_print
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -274,7 +275,6 @@ class ShowWinnersDialog extends StatelessWidget {
 }
 
 var db = FirebaseFirestore.instance;
-//void _getWinners(List<QueryDocumentSnapshot> players) {
 Stream<List<QueryDocumentSnapshot>> _getWinners(String gameId) {
   return db
       .collection('Games/$gameId/Players')
@@ -348,9 +348,8 @@ Stream<QuerySnapshot> _getCardsStream(String gameId) {
       .startAt([path]).endAt(['$path\uf8ff']).snapshots();
 }
 
-Future<void> _generateNextNumber(
-    String gameId, List<String> numbers, int symbolCount) {
-  var number = "willnevershowup";
+Future<void> _generateNextNumber(String gameId, List<String> numbers, int symbolCount) {
+  late String number;
   do {
     number = (1 + random.nextInt(symbolCount)).toString();
   } while (numbers.contains(number) && numbers.length < symbolCount);
@@ -461,8 +460,7 @@ int _getScoreForCardNumbers(List<String> numbers, List<String> cardNumbers, [int
   return maxLength;
 }
 
-int _calculateWinnerTime(
-    int playerCount, int cardsPerPlayerCount, int symbolCount) {
+int _calculateWinnerTime(int playerCount, int cardsPerPlayerCount, int symbolCount) {
   var cards = {};
   for (var playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     for (var playerCardIndex = 0;
