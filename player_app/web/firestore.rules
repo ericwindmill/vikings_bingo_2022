@@ -16,7 +16,7 @@ service cloud.firestore {
     function isBingoClaimTimeNow() {
       return request.resource.data['bingoClaimTime'] == request.time;
     }
-
+    
     match /{document=**} {
     	allow read, write: if isAdmin();
     }
