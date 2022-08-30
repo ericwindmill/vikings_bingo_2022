@@ -30,6 +30,7 @@ service cloud.firestore {
         allow write: if request.auth.uid == playerid
         	 && (resource == null || request.resource.data.diff(resource.data).affectedKeys()
         	      .hasOnly(['name', 'status', 'bingoClaimTime']))
+           && (request.resource.data.status != 'wonBingo')
            && (!hasBingoClaimTime() || (
                 isBingoClaimTimeNow() && isCalm()
               ))
