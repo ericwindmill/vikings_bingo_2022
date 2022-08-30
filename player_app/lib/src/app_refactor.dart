@@ -58,7 +58,7 @@ class BingoApp extends StatefulWidget {
 }
 
 class _BingoAppState extends State<BingoApp> {
-  Stream<String> gameIdStream = FirestoreService.gameIdStream();
+  Stream<String?> gameIdStream = FirestoreService.gameIdStream();
   bool initialLoading = true;
   Player? player;
 
@@ -67,7 +67,7 @@ class _BingoAppState extends State<BingoApp> {
       // if signed out, return
       if (user == null) return;
 
-      // if the player already exists, don't update it with a new name
+      // if the player doesn't exist, generate a name and create the player.
       if (player == null) {
         if (user.displayName == null) {
           final name = generateRandomPlayerName();
@@ -76,6 +76,7 @@ class _BingoAppState extends State<BingoApp> {
             name: name,
             status: PlayerStatus.newPlayer,
           );
+          // update name in Firebase
           user.updateDisplayName(name);
         } else {
           player = Player(
@@ -93,8 +94,10 @@ class _BingoAppState extends State<BingoApp> {
     gameIdStream.listen((String? newGId) async {
       if (newGId == null) return;
       await FirestoreService.updatePlayerStatus(
-          PlayerStatus.newPlayer, player!, newGId);
-      // await FirestoreService.joinLobby(gameId: newGId, player: player!);
+        PlayerStatus.newPlayer,
+        player!,
+        newGId,
+      );
       setState(() {
         initialLoading = false;
       });
@@ -109,13 +112,13 @@ class _BingoAppState extends State<BingoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<String>(
+    return StreamBuilder<String?>(
       stream: gameIdStream,
-      builder: (context, AsyncSnapshot<String> gameIdSnapshot) {
+      builder: (context, AsyncSnapshot<String?> gameIdSnapshot) {
         bool shouldShowStartPageWithDisabledButton =
             gameIdSnapshot.connectionState == ConnectionState.waiting ||
                 !gameIdSnapshot.hasData ||
-                gameIdSnapshot.data == 'none' ||
+                gameIdSnapshot.data == null ||
                 player == null ||
                 player!.status == PlayerStatus.newPlayer;
 

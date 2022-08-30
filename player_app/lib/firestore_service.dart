@@ -44,13 +44,14 @@ class FirestoreService {
     updatePlayerStatus(PlayerStatus.claimingBingo, player, gameId);
   }
 
-  static Stream<String> gameIdStream() {
+  static Stream<String?> gameIdStream() {
     return FirebaseFirestore.instance
         .doc('Globals/Bootstrap')
         .snapshots()
         .map((DocumentSnapshot? docSnapshot) {
-      if (docSnapshot == null) return 'none';
-      if (docSnapshot.exists && docSnapshot.data() != null) {
+      if (docSnapshot != null &&
+          docSnapshot.exists &&
+          docSnapshot.data() != null) {
         final data = docSnapshot.data() as Map<String, dynamic>;
         return data['currentGame'];
       }

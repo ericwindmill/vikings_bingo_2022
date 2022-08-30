@@ -13,22 +13,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // if (!kReleaseMode) {
-  //   try {
-  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  //   } catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
-
   await FirebaseAuth.instance.signInAnonymously();
 
-  // final player = await bootstrapPlayer();
-
-  runApp(
-    AppShell(),
-  );
+  runApp(AppShell());
 }
 
 Future<Player> bootstrapPlayer() async {
