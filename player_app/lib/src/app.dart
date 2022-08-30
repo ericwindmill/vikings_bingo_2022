@@ -7,10 +7,10 @@ import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 import 'package:vikings_bingo/firestore_service.dart';
 import 'package:vikings_bingo/src/util/game_util.dart';
-import 'package:vikings_bingo/src/widgets/start/start_page_refactor.dart';
+import 'package:vikings_bingo/src/widgets/start/start_page.dart';
 
 import 'widgets/game/game_page.dart';
-import 'widgets/setup/setup_page_refactor.dart';
+import 'widgets/setup/setup_page.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({Key? key}) : super(key: key);

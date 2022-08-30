@@ -5,27 +5,6 @@ import 'package:shared/player.dart';
 import 'package:shared/player_status.dart';
 
 class FirestoreService {
-  static Future<void> joinLobby(
-      {required String gameId, required Player player}) async {
-    await FirebaseFirestore.instance
-        .collection('Games/$gameId/Players')
-        .doc(player.uid)
-        .set({
-      'status': PlayerStatus.newPlayer.value,
-      'name': player.name,
-    });
-  }
-
-  static void joinGame({required String gameId, required Player player}) async {
-    await FirebaseFirestore.instance
-        .collection('Games/$gameId/Players')
-        .doc(player.uid)
-        .update({
-      'status': PlayerStatus.waitingForCards.value,
-      'name': player.name,
-    });
-  }
-
   static Future<void> updatePlayerStatus(
       PlayerStatus newStatus, Player player, String gameId) async {
     player.status = newStatus;
@@ -55,7 +34,6 @@ class FirestoreService {
         final data = docSnapshot.data() as Map<String, dynamic>;
         return data['currentGame'];
       }
-      return 'none';
     });
   }
 
@@ -71,23 +49,6 @@ class FirestoreService {
         final bingoValues = List<String>.from(data['numbers'] as List<dynamic>);
         return BingoCard.fromListOfValues(bingoValues);
       }).toList();
-    });
-  }
-
-  static Stream<PlayerStatus?> getPlayerStatusUpdates(String gameId) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    return FirebaseFirestore.instance
-        .collection('Games/$gameId/Players')
-        .doc(uid)
-        .snapshots()
-        .map((docSnapshot) {
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data() as Map<String, dynamic>;
-        final st = data['status'];
-        return statusFromString[st];
-      } else {
-        return null;
-      }
     });
   }
 
