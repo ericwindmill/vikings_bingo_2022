@@ -25,14 +25,13 @@ class FirestoreService {
 
   static void submitBingo(Player player, String gameId) async {
     try {
+      player.status = PlayerStatus.claimingBingo;
       await FirebaseFirestore.instance
           .collection('Games/$gameId/Players')
           .doc(player.uid)
           .set({
         'status': player.status!.value,
-        'name': player.name,
-        if (player.status == PlayerStatus.claimingBingo)
-          'bingoClaimTime': FieldValue.serverTimestamp(),
+        'bingoClaimTime': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } on FirebaseException catch (e) {
       print('msg: ${e.message}, code: ${e.code}');
