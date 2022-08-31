@@ -89,7 +89,15 @@ class _MyHomePageState extends State<MyHomePage> {
           var playerId = doc.id;
           var data = doc.data()! as Map;
           if (data['status'] == 'waiting for cards') {
-            _generateCardsForPlayer(gameId, playerId, cardCountPerPlayer, symbolCount);
+            if (data.containsKey('hostMessage')) {
+              // this is the scenario where the player is rejoining a game where they won before
+              FirebaseFirestore.instance
+                  .doc('Games/$gameId/Players/$playerId')
+                  .update({'status': 'wonBingo'});
+            }
+            else {
+              _generateCardsForPlayer(gameId, playerId, cardCountPerPlayer, symbolCount);
+            }
           }
           if (data['status'] == 'claiming bingo') {
             _claimBingoForPlayer(gameId, playerId, currentNumbers, symbolCount);
