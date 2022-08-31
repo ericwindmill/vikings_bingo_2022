@@ -195,17 +195,31 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               duration: const Duration(seconds: 1),
             ),
-            ElevatedButton(
-              child: const Text("Show winners"),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => ShowWinnersDialog(gameId: gameId),
-                    fullscreenDialog: true,
-                  ),
-                );
-              },
+            StreamBuilder<QuerySnapshot>(
+              stream: db.collection('Games/$gameId/Players')
+                        .where('status', isEqualTo: 'wonBingo')
+                        .snapshots(),
+              builder: (context, asyncSnapshot) {
+                if (asyncSnapshot.hasData) {
+                  var querySnapshot = asyncSnapshot.data!;
+                  return ElevatedButton(
+                    child: Text("Show winners (${querySnapshot.size.toString()})"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext context) => ShowWinnersDialog(gameId: gameId),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                    },
+                  );
+                }
+                if (asyncSnapshot.hasError) {
+                  return Text('Error: ${asyncSnapshot.error}');
+                }
+                return const CircularProgressIndicator();
+              }
             ),
             ElevatedButton(
               child: const Text("Test time to winner"),

@@ -5,18 +5,41 @@ service cloud.firestore {
 		function isAdmin() {
     	return request.auth.uid == 'wT0z5lsXlHRx2PzqwcybBPZyakw1';
     }
+    function newValue(field) { return request.resource.data[field]; }
+    function oldValue(field) { return resource.data[field]; }
+    function hasField(field) { return field in request.resource.data;}
+    function hadField(field) { return resource != null && field in resource.data;}
     function isCalm() {
-    	return !('bingoClaimTime' in resource.data) ||
-        (request.resource.data.bingoClaimTime
-            > resource.data.bingoClaimTime + duration.value(15, 's'));
+    	return !hadField('bingoClaimTime') ||
+          (newValue('bingoClaimTime')
+        > oldValue('bingoClaimTime') + duration.value(15, 's'));
     }
     function hasBingoClaimTime() {
-      return 'bingoClaimTime' in request.resource.data;
+      return hasField('bingoClaimTime');
     }
     function isBingoClaimTimeNow() {
-      return request.resource.data['bingoClaimTime'] == request.time;
+      return newValue('bingoClaimTime') == request.time;
     }
-    
+    function isClearingBingoClaimTime() {
+    	return hadField('bingoClaimTime') && !hasField('bingoClaimTime');
+    }
+    function isWritingBingoClaimTime() {
+    	return (!hadField('bingoClaimTime') && hasField('bingoClaimTime'))
+    	    || (
+          	   hadField('bingoClaimTime') && hasField('bingoClaimTime')
+    	      && oldValue('bingoClaimTime') != newValue('bingoClaimTime')
+          );
+    }
+    function isClearingHostMsg() {
+    	return hadField('bingoClaimTime') && !hasField('bingoClaimTime');
+    }
+    function isWritingField(field) {
+    	return (!hadField(field) && hasField(field))
+          || ( hadField(field) && hasField(field)
+            && oldValue(field) != newValue(field)
+          )
+    }
+
     match /{document=**} {
     	allow read, write: if isAdmin();
     }
@@ -30,9 +53,10 @@ service cloud.firestore {
         allow write: if request.auth.uid == playerid
         	 && (resource == null || request.resource.data.diff(resource.data).affectedKeys()
         	      .hasOnly(['name', 'status', 'bingoClaimTime']))
-           && (!hasBingoClaimTime() || (
-                isBingoClaimTimeNow() && isCalm()
-              ))
+           && (!isWritingField('status') || request.resource.data.status != 'wonBingo')
+           && (!isClearingBingoClaimTime())
+           && (!isClearingHostMsg())
+           && (!isWritingBingoClaimTime() || (isBingoClaimTimeNow() && isCalm()))
           ;
       	match /Cards/{cardid} {
         	allow read: if request.auth.uid == playerid;

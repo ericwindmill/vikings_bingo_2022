@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +17,7 @@ class ShowWinnersDialog extends StatefulWidget {
 class _ShowWinnersState extends State<ShowWinnersDialog> {
   late String gameId;
   final db = FirebaseFirestore.instance;
+  bool showNames = false, showMsg = false;
 
   @override void initState() {
     super.initState();
@@ -37,6 +40,16 @@ class _ShowWinnersState extends State<ShowWinnersDialog> {
         title: const Text('Winners'),
       ),
       body: Column(children: [
+        Row(children: [
+          Checkbox(value: showNames, onChanged: (value) {
+            print('Checkbox.onChanged: value=$value');
+            setState(() {
+              showNames = value!;
+              showMsg = value;
+            });
+          }),
+          const Text("Show names and messages")
+        ]),
         FutureBuilder(
           future: FirebaseFirestore.instance.collection('Games').orderBy('createdAt', descending: true).get(),
           builder: (context, AsyncSnapshot<QuerySnapshot> asyncSnapshot) {
@@ -50,38 +63,41 @@ class _ShowWinnersState extends State<ShowWinnersDialog> {
             );
           }
         ),
-        Center(child: StreamBuilder(
-          stream: _getWinners(gameId),
-          builder: (context, asyncSnapshot) {
-            if (asyncSnapshot.hasData) {
-              var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
-              print('Got ${winners.length} winners: ${winners.map((d) => d.id)}');
-              return ListView(shrinkWrap: true, children: winners.map((winner) {
-                var data = winner.data()! as Map;
-                var name = data["name"];
-                var time = (data['bingoClaimTime'] as Timestamp).toDate();
-                var msg = (data['hostMessage'] ?? '-');
-                return ListTile(
-                  isThreeLine: true,
-                  title: Text(winner.id),
-                  subtitle: Text('$name\nwon at $time\nmsg: "$msg"'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.message_sharp),
-                    onPressed: () {
-                      db.doc('Games/$gameId/Players/${winner.id}').update(
-                        {'hostMessage': Random().nextInt(100000).toString()}
-                      );
-                    },
-                  ),
-                );
-              }).toList());
-            }
-            if (asyncSnapshot.hasError) {
-              return Text('Error: ${asyncSnapshot.error}');
-            }
-            return const CircularProgressIndicator();
-          },
-        ))
+        Expanded(
+          child: StreamBuilder(
+            stream: _getWinners(gameId),
+            builder: (context, asyncSnapshot) {
+              if (asyncSnapshot.hasData) {
+                var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
+                print('Got ${winners.length} winners: ${winners.map((d) => d.id)}');
+                return ListView(shrinkWrap: true, 
+                  children: winners.map((winner) {
+                  var data = winner.data()! as Map;
+                  var name = showNames ? data["name"]: winner.id;
+                  var time = (data['bingoClaimTime'] as Timestamp).toDate();
+                  var msg = showMsg ? (data['hostMessage'] ?? '-') : "???";
+                  return ListTile(
+                    isThreeLine: true,
+                    title: Text(name),
+                    subtitle: Text('won at $time\nmsg: "$msg"'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.message_sharp),
+                      onPressed: () {
+                        db.doc('Games/$gameId/Players/${winner.id}').update(
+                          {'hostMessage': Random().nextInt(100000).toString()}
+                        );
+                      },
+                    ),
+                  );
+                }).toList());
+              }
+              if (asyncSnapshot.hasError) {
+                return Text('Error: ${asyncSnapshot.error}');
+              }
+              return const CircularProgressIndicator();
+            },
+          )
+        )
       ]),
     );
   }
