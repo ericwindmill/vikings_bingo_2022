@@ -63,14 +63,15 @@ class _ShowWinnersState extends State<ShowWinnersDialog> {
             );
           }
         ),
-        Center(
+        Expanded(
           child: StreamBuilder(
             stream: _getWinners(gameId),
             builder: (context, asyncSnapshot) {
               if (asyncSnapshot.hasData) {
                 var winners = asyncSnapshot.data! as List<QueryDocumentSnapshot>;
                 print('Got ${winners.length} winners: ${winners.map((d) => d.id)}');
-                return ListView(shrinkWrap: true, children: winners.map((winner) {
+                return ListView(shrinkWrap: true, 
+                  children: winners.map((winner) {
                   var data = winner.data()! as Map;
                   var name = showNames ? data["name"]: winner.id;
                   var time = (data['bingoClaimTime'] as Timestamp).toDate();
