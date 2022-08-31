@@ -28,7 +28,7 @@ class _ClaimBingoButtonState extends State<ClaimBingoButton> {
     setState(() {
       isCalm = false;
     });
-    Future.delayed(Duration(seconds: 15), () {
+    Future.delayed(Duration(seconds: 15), () {}).then((value) {
       setState(() {
         isCalm = true;
       });

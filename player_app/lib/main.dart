@@ -11,6 +11,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // try {
+  //   FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  // } catch (e) {
+  //   print(e);
+  // }
+
   await FirebaseAuth.instance.signInAnonymously();
 
   runApp(AppShell());
