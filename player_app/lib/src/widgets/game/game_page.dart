@@ -29,7 +29,7 @@ class _GamePageState extends State<GamePage> {
   void initState() {
     super.initState();
     _listenForPlayerStatusUpdates();
-    if (widget.player.status == PlayerStatus.wonBingo) {
+    if (widget.player.hostMessage != null) {
       hasWonBingo = true;
     }
   }
