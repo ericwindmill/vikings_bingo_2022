@@ -293,7 +293,6 @@ Stream<List<String>> _getNumbersStream(String gameId) {
       .doc(gameId)
       .snapshots()
       .map((docSnapshot) {
-    // TODO: Unhandled Exception: type 'Null' is not a subtype of type 'Map<String, dynamic>' in type cast
     if (docSnapshot.exists &&
         docSnapshot.data() != null &&
         docSnapshot.data()!.containsKey('numbers')) {
@@ -385,7 +384,7 @@ List<String> _getNumbersForCardId(int cardId, int symbolCount) {
       numbers[row*5 + col] = num;
     }
   }
-  numbers.removeAt(13); // Remove free square
+  numbers.removeAt(12); // Remove free square
   return numbers;
 }
 
